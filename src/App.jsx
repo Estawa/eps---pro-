@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import * as XLSX from "xlsx"; 
+import * as XLSX from "xlsx";
 import {
   Users, Camera, ClipboardCheck, UserCircle2, Plus, Trash2, ChevronLeft,
   Printer, X, Check, HeartPulse, UserX, Shirt, Calendar, FolderOpen,
@@ -2146,7 +2146,7 @@ function BlocNoteScreen({ classes, updateClasse }) {
 
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: PRIMARY, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
-          <input type="file" accept="image/*,video/*" capture="environment" onChange={(e) => e.target.files.length && ajouterMedias(e.target.files)} style={{ display: "none" }} />
+          <input type="file" accept="image/*" capture="environment" onChange={(e) => e.target.files.length && ajouterMedias(e.target.files)} style={{ display: "none" }} />
           <Camera size={15} /> Prendre une photo
         </label>
         <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: PRIMARY, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
