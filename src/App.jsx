@@ -14,21 +14,21 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 const nowISO = () => new Date().toISOString();
 const fmtDateHeure = (iso) => {
   const d = new Date(iso);
-  return d.toLocaleDateString("fr-FR") + " Â· " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString("fr-FR") + " · " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 };
 
-// ---------- DonnÃ©es de dÃ©monstration ----------
+// ---------- Données de démonstration ----------
 const seedClasses = () => {
   const eleves1 = [
     { id: uid(), nom: "Bernard", prenom: "Lina", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
     { id: uid(), nom: "Costa", prenom: "Enzo", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
     { id: uid(), nom: "Diallo", prenom: "Awa", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
     { id: uid(), nom: "Faucher", prenom: "Tom", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
-    { id: uid(), nom: "Gomez", prenom: "InÃ¨s", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
+    { id: uid(), nom: "Gomez", prenom: "Inès", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
   ];
   const eleves2 = [
-    { id: uid(), nom: "Girard", prenom: "NaÃ«l", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
-    { id: uid(), nom: "Henry", prenom: "ChloÃ©", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
+    { id: uid(), nom: "Girard", prenom: "Naël", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
+    { id: uid(), nom: "Henry", prenom: "Chloé", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
     { id: uid(), nom: "Idir", prenom: "Sami", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
     { id: uid(), nom: "Julien", prenom: "Maud", photo: null, notes: "", annotations: [], telephoneEleve: "", telephoneParents: "", sousClasseId: null, dispenses: [] },
   ];
@@ -37,12 +37,12 @@ const seedClasses = () => {
     id: uid(),
     nom: "2nde 4",
     eleves: eleves1,
-    cycles: [{ id: uid(), activite: "Course de durÃ©e", dateDebut: "2026-09-01", seances: [] }],
+    cycles: [{ id: uid(), activite: "Course de durée", dateDebut: "2026-09-01", seances: [] }],
     profPrincipal: "Mme Roussel", profPrincipalPhoto: null, cpe: "M. Nasri", delegues: [eleves1[0].id, eleves1[2].id], chronos: [], blocNotes: [], type: "classe", sousClasses: [],
   },
   {
     id: uid(),
-    nom: "1Ã¨re 2",
+    nom: "1ère 2",
     eleves: eleves2,
     cycles: [{ id: uid(), activite: "Musculation", dateDebut: "2026-09-01", seances: [] }],
     profPrincipal: "", profPrincipalPhoto: null, cpe: "", delegues: [eleves2[1].id], chronos: [], blocNotes: [], type: "classe", sousClasses: [],
@@ -51,9 +51,9 @@ const seedClasses = () => {
 };
 
 const STATUTS = {
-  present: { label: "PrÃ©sent", short: "P", color: "var(--st-present-c)", bg: "var(--st-present-bg)", border: "var(--st-present-bd)", Icon: Check },
+  present: { label: "Présent", short: "P", color: "var(--st-present-c)", bg: "var(--st-present-bg)", border: "var(--st-present-bd)", Icon: Check },
   sans_tenue: { label: "Sans tenue", short: "ST", color: "var(--st-tenue-c)", bg: "var(--st-tenue-bg)", border: "var(--st-tenue-bd)", Icon: Shirt },
-  dispense: { label: "DispensÃ©", short: "D", color: "var(--st-dispense-c)", bg: "var(--st-dispense-bg)", border: "var(--st-dispense-bd)", Icon: HeartPulse },
+  dispense: { label: "Dispensé", short: "D", color: "var(--st-dispense-c)", bg: "var(--st-dispense-bg)", border: "var(--st-dispense-bd)", Icon: HeartPulse },
   absent: { label: "Absent", short: "A", color: "var(--st-absent-c)", bg: "var(--st-absent-bg)", border: "var(--st-absent-bd)", Icon: UserX },
 };
 
@@ -186,7 +186,7 @@ function TopBar({ title, onBack, theme, onToggleTheme }) {
           by C. Guilhem
         </div>
       </div>
-      <button onClick={onToggleTheme} title="Changer de luminositÃ©" style={{ border: `1px solid ${LINE}`, background: "none", borderRadius: 9, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: ACCENT }}>
+      <button onClick={onToggleTheme} title="Changer de luminosité" style={{ border: `1px solid ${LINE}`, background: "none", borderRadius: 9, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: ACCENT }}>
         {theme === "sombre" ? <Sun size={16} /> : <Moon size={16} />}
       </button>
     </div>
@@ -210,7 +210,7 @@ function NavButton({ active, onClick, Icon, label }) {
   );
 }
 
-// ---------- Ã‰cran : Accueil ----------
+// ---------- Écran : Accueil ----------
 const PALETTE_CLASSES = [
   { bg: "#E9F5EE", bd: "#8FD9B4", tx: "#1F8F5B" },
   { bg: "#EAF0FF", bd: "#9DB8FF", tx: "#3355D8" },
@@ -246,7 +246,7 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt }) {
           Bonjour Christophe
         </div>
         <div style={{ color: "var(--muted)", fontSize: 13.5, marginTop: 4 }}>
-          {classes.length} classes Â· {totalEleves} Ã©lÃ¨ves suivis
+          {classes.length} classes · {totalEleves} élèves suivis
         </div>
       </div>
 
@@ -254,20 +254,20 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontSize: 12.5, color: "var(--muted-soft)" }}>
           <GraduationCap size={14} color={PRIMARY} />
           {etablissement?.nom && <span style={{ fontWeight: 600, color: INK }}>{etablissement.nom}</span>}
-          {etablissement?.anneeScolaire && <span>Â· AnnÃ©e {etablissement.anneeScolaire}</span>}
+          {etablissement?.anneeScolaire && <span>· Année {etablissement.anneeScolaire}</span>}
         </div>
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Emploi du temps â€” Semaine
+          Emploi du temps — Semaine
         </div>
-        <button onClick={onOpenEdt} style={{ border: "none", background: "none", color: PRIMARY, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>GÃ©rer â†’</button>
+        <button onClick={onOpenEdt} style={{ border: "none", background: "none", color: PRIMARY, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Gérer →</button>
       </div>
 
       {(vacancesEnCours || ferieAujourdhui) && (
         <div style={{ background: ACCENT_SOFT, border: `1px solid ${ACCENT}`, borderRadius: 10, padding: "9px 12px", marginBottom: 10, fontSize: 12, color: ACCENT, fontWeight: 600 }}>
-          {vacancesEnCours ? `En vacances : ${vacancesEnCours.nom}` : `Jour fÃ©riÃ© : ${ferieAujourdhui.nom}`}
+          {vacancesEnCours ? `En vacances : ${vacancesEnCours.nom}` : `Jour férié : ${ferieAujourdhui.nom}`}
         </div>
       )}
 
@@ -291,7 +291,7 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt }) {
       {creneaux.length === 0 ? (
         <div style={{ background: `linear-gradient(135deg, ${PRIMARY_SOFT}, ${ACCENT_SOFT})`, border: `1px solid ${LINE}`, borderRadius: 16, padding: 24, color: "var(--muted)", fontSize: 13.5, textAlign: "center", minHeight: 180, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
           <Calendar size={28} color={PRIMARY} />
-          <div style={{ color: INK, fontWeight: 700, fontSize: 15 }}>Aucun crÃ©neau renseignÃ©</div>
+          <div style={{ color: INK, fontWeight: 700, fontSize: 15 }}>Aucun créneau renseigné</div>
           <div>Configure ton emploi du temps depuis l'onglet Outils.</div>
         </div>
       ) : (
@@ -329,12 +329,12 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt }) {
                             padding: "6px 6px", textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
                           }}>
                             <div style={{ fontWeight: 700, color: couleur.tx, fontSize: 11 }}>{c.classeId ? nomClasse(c.classeId) : (c.titre || "")}</div>
-                            <div style={{ color: couleur.tx, opacity: 0.75, fontSize: 9.5 }}>{c.heureFin ? `â€“${c.heureFin}` : ""}</div>
+                            <div style={{ color: couleur.tx, opacity: 0.75, fontSize: 9.5 }}>{c.heureFin ? `–${c.heureFin}` : ""}</div>
                             {c.classeId && c.activite && <div style={{ color: couleur.tx, fontWeight: 600, fontSize: 9.5, marginTop: 1 }}>{c.activite}</div>}
                             {c.semaine && <div style={{ color: couleur.tx, opacity: 0.6, fontSize: 8.5, fontWeight: 700, marginTop: 1 }}>SEM. {c.semaine}</div>}
                           </div>
                         ) : (
-                          <div style={{ textAlign: "center", color: "var(--faint)", padding: "6px 0" }}>Â·</div>
+                          <div style={{ textAlign: "center", color: "var(--faint)", padding: "6px 0" }}>·</div>
                         )}
                       </td>
                     );
@@ -368,7 +368,7 @@ function QuickTile({ Icon, label, onClick, tone }) {
   );
 }
 
-// ---------- Ã‰cran : Liste des classes ----------
+// ---------- Écran : Liste des classes ----------
 function ClassesScreen({ classes, setClasses, onOpenClass }) {
   const [formOuvert, setFormOuvert] = useState(false);
   const creerClasse = ({ nom }) => {
@@ -376,7 +376,7 @@ function ClassesScreen({ classes, setClasses, onOpenClass }) {
     setFormOuvert(false);
   };
   const removeClasse = (id) => {
-    if (!confirm("Supprimer cette classe et toutes ses donnÃ©es ?")) return;
+    if (!confirm("Supprimer cette classe et toutes ses données ?")) return;
     setClasses(classes.filter((c) => c.id !== id));
   };
   return (
@@ -395,7 +395,7 @@ function ClassesScreen({ classes, setClasses, onOpenClass }) {
               {c.nom}
               {c.type === "groupe" && <span style={{ fontSize: 10, fontWeight: 700, color: ACCENT, background: ACCENT_SOFT, padding: "2px 7px", borderRadius: 6 }}>Groupe classe</span>}
             </div>
-            <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{c.eleves.length} Ã©lÃ¨ves Â· cycle en cours : {c.cycles[c.cycles.length - 1]?.activite}</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{c.eleves.length} élèves · cycle en cours : {c.cycles[c.cycles.length - 1]?.activite}</div>
           </div>
           <button onClick={(e) => { e.stopPropagation(); removeClasse(c.id); }} style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer" }}>
             <Trash2 size={18} />
@@ -411,15 +411,15 @@ function ClassesScreen({ classes, setClasses, onOpenClass }) {
           fields={[{ key: "nom", label: "Nom de la classe", placeholder: "ex : Terminale 3", required: true }]}
           onClose={() => setFormOuvert(false)}
           onSubmit={creerClasse}
-          submitLabel="CrÃ©er la classe"
+          submitLabel="Créer la classe"
         />
       )}
     </div>
   );
 }
 
-// ---------- Ã‰cran : DÃ©tail classe (liste imprimable + gestion Ã©lÃ¨ves) ----------
-// ---------- FenÃªtre : encadrement de la classe (PP, CPE, dÃ©lÃ©guÃ©s) ----------
+// ---------- Écran : Détail classe (liste imprimable + gestion élèves) ----------
+// ---------- Fenêtre : encadrement de la classe (PP, CPE, délégués) ----------
 function ClasseInfoModal({ classe, onClose, onSave }) {
   const [pp, setPp] = useState(classe.profPrincipal || "");
   const [cpe, setCpe] = useState(classe.cpe || "");
@@ -433,7 +433,7 @@ function ClasseInfoModal({ classe, onClose, onSave }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, maxHeight: "85vh", overflowY: "auto", background: CARD, borderRadius: "18px 18px 0 0", padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Encadrement â€” {classe.nom}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Encadrement — {classe.nom}</div>
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)" }}><X size={20} /></button>
         </div>
 
@@ -443,7 +443,7 @@ function ClasseInfoModal({ classe, onClose, onSave }) {
         <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 4 }}>CPE</div>
         <input value={cpe} onChange={(e) => setCpe(e.target.value)} placeholder="Nom du/de la CPE" style={{ width: "100%", padding: 10, borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 14, marginBottom: 16, background: CARD, color: INK }} />
 
-        <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 6 }}>DÃ©lÃ©guÃ©s de classe</div>
+        <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 6 }}>Délégués de classe</div>
         <div style={{ marginBottom: 18 }}>
           {classe.eleves.map((e) => (
             <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 4px", cursor: "pointer" }}>
@@ -451,7 +451,7 @@ function ClasseInfoModal({ classe, onClose, onSave }) {
               <span style={{ fontSize: 13.5, color: INK }}>{e.prenom} {e.nom}</span>
             </label>
           ))}
-          {classe.eleves.length === 0 && <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>Ajoute d'abord des Ã©lÃ¨ves Ã  cette classe.</div>}
+          {classe.eleves.length === 0 && <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>Ajoute d'abord des élèves à cette classe.</div>}
         </div>
 
         <button
@@ -529,7 +529,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
               return cle ? l[cle] : "";
             };
             const nomL = normaliser(getVal(["nom"]));
-            const prenomL = normaliser(getVal(["prenom", "prÃ©nom"]));
+            const prenomL = normaliser(getVal(["prenom", "prénom"]));
             return nomL === normaliser(e.nom) && prenomL === normaliser(e.prenom);
           });
           if (!ligne) return e;
@@ -545,7 +545,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
           return { ...e, telephoneEleve: telE || e.telephoneEleve, telephoneParents: telP || e.telephoneParents };
         });
         updateClasse({ ...classe, eleves });
-        setImportMsg(`${maj} Ã©lÃ¨ve(s) mis Ã  jour.`);
+        setImportMsg(`${maj} élève(s) mis à jour.`);
       } catch (err) {
         setImportMsg("Impossible de lire ce fichier.");
       }
@@ -571,9 +571,9 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
           <thead>
             <tr>
-              <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>NÂ°</th>
+              <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>N°</th>
               <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>Nom</th>
-              <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>PrÃ©nom</th>
+              <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>Prénom</th>
             </tr>
           </thead>
           <tbody>
@@ -606,13 +606,13 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
           <Pencil size={15} />
         </button>
         <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, color: INK, marginBottom: 3 }}>
-          <GraduationCap size={14} color={PRIMARY} /> Prof. principal : <b>{classe.profPrincipal || "non renseignÃ©"}</b>
+          <GraduationCap size={14} color={PRIMARY} /> Prof. principal : <b>{classe.profPrincipal || "non renseigné"}</b>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, color: INK, marginBottom: 3 }}>
-          <GraduationCap size={14} color={PRIMARY} /> CPE : <b>{classe.cpe || "non renseignÃ©"}</b>
+          <GraduationCap size={14} color={PRIMARY} /> CPE : <b>{classe.cpe || "non renseigné"}</b>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, color: INK }}>
-          <Star size={14} color={PRIMARY} /> DÃ©lÃ©guÃ©s : <b>{nomsDelegues.length ? nomsDelegues.join(", ") : "non renseignÃ©"}</b>
+          <Star size={14} color={PRIMARY} /> Délégués : <b>{nomsDelegues.length ? nomsDelegues.join(", ") : "non renseigné"}</b>
         </div>
       </div>
 
@@ -673,22 +673,22 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
           <Printer size={15} /> Liste imprimable
         </button>
         <button onClick={() => setFormEleveOuvert(true)} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 600, fontSize: 13.5 }}>
-          <Plus size={15} /> Ajouter un Ã©lÃ¨ve
+          <Plus size={15} /> Ajouter un élève
         </button>
       </div>
 
       <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "9px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: "var(--muted-soft)", fontSize: 12.5, cursor: "pointer", marginBottom: importMsg ? 6 : 14 }}>
         <input type="file" accept=".csv,.xlsx,.xls,.ods" onChange={(e) => e.target.files[0] && importerTelephones(e.target.files[0])} style={{ display: "none" }} />
-        <Upload size={14} /> Importer les tÃ©lÃ©phones (Excel / CSV / ODS)
+        <Upload size={14} /> Importer les téléphones (Excel / CSV / ODS)
       </label>
       {importMsg && <div style={{ fontSize: 11.5, color: PRIMARY, marginBottom: 14, textAlign: "center" }}>{importMsg}</div>}
 
       {(classe.chronos || []).length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4 }}>Fiches chronomÃ¨tre</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4 }}>Fiches chronomètre</div>
             <button
-              onClick={() => { if (confirm("Supprimer toutes les fiches chronomÃ¨tre de cette classe ?")) updateClasse({ ...classe, chronos: [] }); }}
+              onClick={() => { if (confirm("Supprimer toutes les fiches chronomètre de cette classe ?")) updateClasse({ ...classe, chronos: [] }); }}
               style={{ fontSize: 11, border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer" }}
             >
               Tout supprimer
@@ -699,12 +699,12 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
               <div onClick={() => onOpenChrono(f.id)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, cursor: "pointer" }}>
                 <Flag size={15} color={PRIMARY} />
                 <div style={{ fontSize: 13, color: INK }}>
-                  {f.titre && <b>{f.titre} Â· </b>}
-                  {fmtDateHeure(f.date)} Â· {f.distance} m Â· {f.temps.length} temps
+                  {f.titre && <b>{f.titre} · </b>}
+                  {fmtDateHeure(f.date)} · {f.distance} m · {f.temps.length} temps
                 </div>
               </div>
               <button
-                onClick={() => { if (confirm("Supprimer cette fiche chronomÃ¨tre ?")) updateClasse({ ...classe, chronos: classe.chronos.filter((x) => x.id !== f.id) }); }}
+                onClick={() => { if (confirm("Supprimer cette fiche chronomètre ?")) updateClasse({ ...classe, chronos: classe.chronos.filter((x) => x.id !== f.id) }); }}
                 style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer" }}
               >
                 <Trash2 size={15} />
@@ -730,8 +730,8 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
               <div onClick={() => onOpenBlocNote(n.id)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, cursor: "pointer", minWidth: 0 }}>
                 <FileText size={15} color={PRIMARY} />
                 <div style={{ fontSize: 13, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {n.titre && <b>{n.titre} Â· </b>}
-                  {fmtDateHeure(n.date)}{(n.medias || []).length > 0 ? ` Â· ${n.medias.length} mÃ©dia(s)` : ""}
+                  {n.titre && <b>{n.titre} · </b>}
+                  {fmtDateHeure(n.date)}{(n.medias || []).length > 0 ? ` · ${n.medias.length} média(s)` : ""}
                 </div>
               </div>
               <button
@@ -747,12 +747,12 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
 
       {(evaluations || []).filter((ev) => ev.classeId === classe.id).length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>Ã‰valuations</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>Évaluations</div>
           {evaluations.filter((ev) => ev.classeId === classe.id).map((ev) => (
             <div key={ev.id} onClick={() => onOpenEvaluation(ev.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", border: `1px solid ${LINE}`, borderRadius: 10, marginBottom: 6, background: CARD, cursor: "pointer" }}>
               <Table size={15} color={PRIMARY} />
               <div style={{ fontSize: 13, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                <b>{ev.titre}</b> Â· modifiÃ©e le {new Date(ev.dateModif).toLocaleDateString("fr-FR")}
+                <b>{ev.titre}</b> · modifiée le {new Date(ev.dateModif).toLocaleDateString("fr-FR")}
               </div>
             </div>
           ))}
@@ -766,7 +766,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
             <div style={{ fontSize: 14.5, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {e.nom} <span style={{ color: "var(--muted)" }}>{e.prenom}</span>
               {classe.type === "groupe" && e.sousClasseId && (
-                <span style={{ fontSize: 10.5, color: ACCENT, marginLeft: 6 }}>Â· {classe.sousClasses.find((s) => s.id === e.sousClasseId)?.nom}</span>
+                <span style={{ fontSize: 10.5, color: ACCENT, marginLeft: 6 }}>· {classe.sousClasses.find((s) => s.id === e.sousClasseId)?.nom}</span>
               )}
             </div>
           </div>
@@ -790,17 +790,17 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
       )}
       {formEleveOuvert && (
         <FormModal
-          title="Ajouter un Ã©lÃ¨ve"
+          title="Ajouter un élève"
           fields={[
             { key: "nom", label: "Nom", placeholder: "Nom de famille", required: true },
-            { key: "prenom", label: "PrÃ©nom", placeholder: "PrÃ©nom" },
+            { key: "prenom", label: "Prénom", placeholder: "Prénom" },
             ...(classe.type === "groupe" && classe.sousClasses.length > 0
               ? [{ key: "sousClasseId", label: "Classe d'origine", type: "select", options: classe.sousClasses.map((s) => ({ value: s.id, label: s.nom })) }]
               : []),
           ]}
           onClose={() => setFormEleveOuvert(false)}
           onSubmit={creerEleve}
-          submitLabel="Ajouter l'Ã©lÃ¨ve"
+          submitLabel="Ajouter l'élève"
         />
       )}
       {eleveEnEdition && (
@@ -808,7 +808,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
           title={`Modifier ${eleveEnEdition.prenom} ${eleveEnEdition.nom}`}
           fields={[
             { key: "nom", label: "Nom", placeholder: "Nom de famille", required: true, default: eleveEnEdition.nom },
-            { key: "prenom", label: "PrÃ©nom", placeholder: "PrÃ©nom", default: eleveEnEdition.prenom },
+            { key: "prenom", label: "Prénom", placeholder: "Prénom", default: eleveEnEdition.prenom },
             ...(classe.type === "groupe" && classe.sousClasses.length > 0
               ? [{ key: "sousClasseId", label: "Classe d'origine", type: "select", options: classe.sousClasses.map((s) => ({ value: s.id, label: s.nom })), default: eleveEnEdition.sousClasseId || "" }]
               : []),
@@ -840,7 +840,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
   );
 }
 
-// ---------- Ã‰cran : Trombinoscope ----------
+// ---------- Écran : Trombinoscope ----------
 function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
   const [classeId, setClasseId] = useState(classes[0]?.id);
   const classe = classes.find((c) => c.id === classeId);
@@ -863,7 +863,7 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
         <div
           onClick={() => onOpenEleve(classeId, e.id)}
           style={{ width: "100%", aspectRatio: "1", borderRadius: 12, overflow: "hidden", cursor: "pointer" }}
-          title="Ouvrir la fiche Ã©lÃ¨ve"
+          title="Ouvrir la fiche élève"
         >
           {e.photo ? (
             <img src={e.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -939,7 +939,7 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
           })}
           {sansSousClasse.length > 0 && (
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Classe d'origine non renseignÃ©e</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Classe d'origine non renseignée</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 10 }}>
                 {sansSousClasse.map(renderEleveTile)}
               </div>
@@ -955,7 +955,7 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
   );
 }
 
-// ---------- Ã‰cran : Appel ----------
+// ---------- Écran : Appel ----------
 function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio }) {
   const [classeId, setClasseId] = useState(classes[0]?.id);
   const classe = classes.find((c) => c.id === classeId);
@@ -964,7 +964,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   const [statuts, setStatuts] = useState({});
   const [saved, setSaved] = useState(false);
   const [detailsOuverts, setDetailsOuverts] = useState(false);
-  const [dispenseCible, setDispenseCible] = useState(null); // Ã©lÃ¨ve pour lequel on configure une dispense
+  const [dispenseCible, setDispenseCible] = useState(null); // élève pour lequel on configure une dispense
 
   const seanceExistante = useMemo(() => cycle?.seances.find((s) => s.date === date), [cycle, date]);
 
@@ -1106,7 +1106,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
         <div onClick={() => onOpenEleve(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
           <Avatar eleve={e} size={30} />
           {!dispense && compteST > 0 && (
-            <div title={`${compteST} oubli(s) de tenue${perteFinale ? " Â· -1 pt" : ""}`} style={{
+            <div title={`${compteST} oubli(s) de tenue${perteFinale ? " · -1 pt" : ""}`} style={{
               position: "absolute", bottom: -3, right: -3, minWidth: 15, height: 15, borderRadius: 8, padding: "0 3px",
               background: perteFinale ? "var(--st-absent-c)" : "var(--st-tenue-c)", color: "#fff", fontSize: 9, fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${CARD}`,
@@ -1117,7 +1117,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
         </div>
         <div
           onClick={() => onOpenEleve(classeId, e.id)}
-          title={dispense && !dispenseAvecPhoto ? "DispensÃ© â€” justificatif photo manquant" : undefined}
+          title={dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
           style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
         >
           {e.prenom} {e.nom}
@@ -1162,14 +1162,14 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
           {classes.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
         </select>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 12.5, background: CARD, color: INK }} />
-        <button onClick={() => setDetailsOuverts((o) => !o)} title="DÃ©tails du cycle" style={{ border: `1px solid ${LINE}`, background: CARD, borderRadius: 9, padding: "7px 9px", cursor: "pointer", display: "flex" }}>
+        <button onClick={() => setDetailsOuverts((o) => !o)} title="Détails du cycle" style={{ border: `1px solid ${LINE}`, background: CARD, borderRadius: 9, padding: "7px 9px", cursor: "pointer", display: "flex" }}>
           <Table2 size={15} color={PRIMARY} />
         </button>
       </div>
 
       {seanceExistante && (
         <div style={{ fontSize: 10.5, color: ACCENT, fontWeight: 600, marginBottom: 4 }}>
-          Appel dÃ©jÃ  enregistrÃ© Ã  cette date â€” les modifications le mettront Ã  jour.
+          Appel déjà enregistré à cette date — les modifications le mettront à jour.
         </div>
       )}
 
@@ -1182,14 +1182,14 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
             </button>
           </div>
           <button onClick={() => onVoirFicheCycle(classeId)} style={{ width: "100%", marginBottom: (classe.profPrincipal || classe.cpe || (classe.delegues || []).length > 0) ? 8 : 0, padding: "8px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: "none", color: PRIMARY, fontWeight: 600, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <Table2 size={13} /> Voir la fiche gÃ©nÃ©rale du cycle
+            <Table2 size={13} /> Voir la fiche générale du cycle
           </button>
           {(classe.profPrincipal || classe.cpe || (classe.delegues || []).length > 0) && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 10.5, color: "var(--muted-soft)" }}>
               {classe.profPrincipal && <span>PP : <b style={{ color: INK }}>{classe.profPrincipal}</b></span>}
-              {classe.cpe && <span>Â· CPE : <b style={{ color: INK }}>{classe.cpe}</b></span>}
+              {classe.cpe && <span>· CPE : <b style={{ color: INK }}>{classe.cpe}</b></span>}
               {(classe.delegues || []).length > 0 && (
-                <span>Â· DÃ©lÃ©guÃ©s : <b style={{ color: INK }}>{classe.delegues.map((id) => classe.eleves.find((e) => e.id === id)).filter(Boolean).map((e) => `${e.prenom} ${e.nom}`).join(", ")}</b></span>
+                <span>· Délégués : <b style={{ color: INK }}>{classe.delegues.map((id) => classe.eleves.find((e) => e.id === id)).filter(Boolean).map((e) => `${e.prenom} ${e.nom}`).join(", ")}</b></span>
               )}
             </div>
           )}
@@ -1210,7 +1210,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
           })}
           {sansSousClasse.length > 0 && (
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, margin: "6px 0 2px" }}>Classe d'origine non renseignÃ©e</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, margin: "6px 0 2px" }}>Classe d'origine non renseignée</div>
               {sansSousClasse.map((e) => renderLigneEleve(e))}
             </div>
           )}
@@ -1221,16 +1221,16 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 58, padding: "10px 16px", background: "linear-gradient(transparent, var(--paper) 30%)" }}>
         <button onClick={enregistrer} style={{ width: "100%", padding: "13px 0", borderRadius: 12, border: "none", background: saved ? "var(--st-present-c)" : PRIMARY, color: "#fff", fontWeight: 700, fontSize: 14.5, cursor: "pointer" }}>
-          {saved ? "Fiche enregistrÃ©e âœ“" : (seanceExistante ? "Mettre Ã  jour l'appel" : "Enregistrer l'appel")}
+          {saved ? "Fiche enregistrée ✓" : (seanceExistante ? "Mettre à jour l'appel" : "Enregistrer l'appel")}
         </button>
       </div>
       {formCycleOuvert && (
         <FormModal
           title="Nouveau cycle"
-          fields={[{ key: "activite", label: "Nom de l'activitÃ©", placeholder: "ex : Badminton", required: true }]}
+          fields={[{ key: "activite", label: "Nom de l'activité", placeholder: "ex : Badminton", required: true }]}
           onClose={() => setFormCycleOuvert(false)}
           onSubmit={creerCycle}
-          submitLabel="CrÃ©er le cycle"
+          submitLabel="Créer le cycle"
         />
       )}
       {dispenseCible && (
@@ -1250,7 +1250,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   );
 }
 
-// ---------- Ã‰cran : Fiche Ã©lÃ¨ve ----------
+// ---------- Écran : Fiche élève ----------
 function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, biblio, setBiblio }) {
   const [notes, setNotes] = useState(eleve.notes || "");
   const [telE, setTelE] = useState(eleve.telephoneEleve || "");
@@ -1259,7 +1259,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   const [formDispenseOuvert, setFormDispenseOuvert] = useState(false);
   const [dispenseEnEdition, setDispenseEnEdition] = useState(null);
   const [photoEnEditionDispense, setPhotoEnEditionDispense] = useState(null); // { dispenseId }
-  const [impressionDispenses, setImpressionDispenses] = useState(null); // array de dispenses Ã  imprimer
+  const [impressionDispenses, setImpressionDispenses] = useState(null); // array de dispenses à imprimer
 
   const historique = useMemo(() => {
     const lignes = [];
@@ -1310,7 +1310,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
     setDispenseEnEdition(null);
   };
   const supprimerDispense = (id) => {
-    if (!confirm("Supprimer cette pÃ©riode de dispense ?")) return;
+    if (!confirm("Supprimer cette période de dispense ?")) return;
     updateEleve({ ...eleve, dispenses: (eleve.dispenses || []).filter((d) => d.id !== id) });
   };
   const declencherPhotoDispense = (dispenseId, file) => {
@@ -1381,7 +1381,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
           {estDelegue && (
             <span style={{ fontSize: 11, fontWeight: 700, color: PRIMARY, background: PRIMARY_SOFT, padding: "4px 9px", borderRadius: 7, display: "flex", alignItems: "center", gap: 4 }}>
-              <Star size={11} /> DÃ©lÃ©guÃ© de classe
+              <Star size={11} /> Délégué de classe
             </span>
           )}
           {classe.profPrincipal && <span style={{ fontSize: 11, color: "var(--muted-soft)", background: CARD, border: `1px solid ${LINE}`, padding: "4px 9px", borderRadius: 7 }}>PP : {classe.profPrincipal}</span>}
@@ -1400,11 +1400,11 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
             </button>
           )}
           <button onClick={() => setFormDispenseOuvert(true)} style={{ border: "none", background: "none", color: PRIMARY, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 700 }}>
-            <Plus size={13} /> Ajouter une pÃ©riode
+            <Plus size={13} /> Ajouter une période
           </button>
         </div>
       </div>
-      {dispenses.length === 0 && <div style={{ fontSize: 13, color: "var(--muted-soft)", marginBottom: 20 }}>Aucune dispense enregistrÃ©e.</div>}
+      {dispenses.length === 0 && <div style={{ fontSize: 13, color: "var(--muted-soft)", marginBottom: 20 }}>Aucune dispense enregistrée.</div>}
       {dispenses.map((d) => {
         const enCours = todayISO() >= d.dateDebut && todayISO() <= d.dateFin;
         return (
@@ -1412,7 +1412,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--st-dispense-c)" }}>
                 Du {new Date(d.dateDebut).toLocaleDateString("fr-FR")} au {new Date(d.dateFin).toLocaleDateString("fr-FR")}
-                {enCours && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700 }}>Â· en cours</span>}
+                {enCours && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700 }}>· en cours</span>}
               </div>
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => setDispenseEnEdition(d)} title="Modifier les dates" style={{ border: "none", background: "none", color: PRIMARY, cursor: "pointer" }}>
@@ -1456,7 +1456,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
             onChange={(e) => updateEleve({ ...eleve, sousClasseId: e.target.value || null })}
             style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, background: CARD, color: INK }}
           >
-            <option value="">â€”</option>
+            <option value="">—</option>
             {classe.sousClasses.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
           </select>
         </div>
@@ -1464,11 +1464,11 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
 
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}><Phone size={11} /> TÃ©l. Ã©lÃ¨ve</div>
+          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}><Phone size={11} /> Tél. élève</div>
           <input value={telE} onChange={(e) => setTelE(e.target.value)} onBlur={saveTelE} placeholder="06 xx xx xx xx" style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }} />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}><Phone size={11} /> TÃ©l. parents</div>
+          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}><Phone size={11} /> Tél. parents</div>
           <input value={telP} onChange={(e) => setTelP(e.target.value)} onBlur={saveTelP} placeholder="06 xx xx xx xx" style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }} />
         </div>
       </div>
@@ -1500,7 +1500,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, color: INK }}>{a.texte}</div>
-            <div style={{ fontSize: 11, color: "var(--muted-soft)", marginTop: 2 }}>{fmtDateHeure(a.date)}{a.activite ? ` Â· ${a.activite}` : ""}</div>
+            <div style={{ fontSize: 11, color: "var(--muted-soft)", marginTop: 2 }}>{fmtDateHeure(a.date)}{a.activite ? ` · ${a.activite}` : ""}</div>
           </div>
         </div>
       ))}
@@ -1513,14 +1513,14 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
         onChange={(e) => setNotes(e.target.value)}
         onBlur={saveNotes}
         rows={5}
-        placeholder="Observations, rÃ©sultats, apprÃ©ciationsâ€¦"
+        placeholder="Observations, résultats, appréciations…"
         style={{ width: "100%", padding: 10, borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 13.5, fontFamily: "inherit", resize: "vertical", marginBottom: 22 }}
       />
 
       <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
         Historique d'appel
       </div>
-      {historique.length === 0 && <div style={{ fontSize: 13, color: "var(--muted-soft)" }}>Aucune sÃ©ance enregistrÃ©e pour le moment.</div>}
+      {historique.length === 0 && <div style={{ fontSize: 13, color: "var(--muted-soft)" }}>Aucune séance enregistrée pour le moment.</div>}
       {historique.map((h, i) => {
         const s = STATUTS[h.statut];
         return (
@@ -1536,19 +1536,19 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
       })}
       {formDispenseOuvert && (
         <FormModal
-          title="Nouvelle pÃ©riode de dispense"
+          title="Nouvelle période de dispense"
           fields={[
             { key: "dateDebut", label: "Du", type: "date", required: true },
             { key: "dateFin", label: "Au", type: "date", required: true },
           ]}
           onClose={() => setFormDispenseOuvert(false)}
           onSubmit={creerDispense}
-          submitLabel="Ajouter la pÃ©riode"
+          submitLabel="Ajouter la période"
         />
       )}
       {dispenseEnEdition && (
         <FormModal
-          title="Modifier la pÃ©riode de dispense"
+          title="Modifier la période de dispense"
           fields={[
             { key: "dateDebut", label: "Du", type: "date", required: true, default: dispenseEnEdition.dateDebut },
             { key: "dateFin", label: "Au", type: "date", required: true, default: dispenseEnEdition.dateFin },
@@ -1563,7 +1563,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
       )}
       {confirmSuppression && (
         <LinkedDeleteModal
-          message="Cette photo a aussi Ã©tÃ© enregistrÃ©e dans Documents (Dispenses EPS). Que veux-tu supprimer ?"
+          message="Cette photo a aussi été enregistrée dans Documents (Dispenses EPS). Que veux-tu supprimer ?"
           labelOnly="Seulement ici, sur la fiche"
           labelBoth="Ici et dans Documents"
           onCancel={() => setConfirmSuppression(null)}
@@ -1575,17 +1575,17 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   );
 }
 
-// ---------- Ã‰cran : Outils (liste) ----------
+// ---------- Écran : Outils (liste) ----------
 function OutilsScreen({ onOpenOutil, onOpenEvaluations, onOpenEdt, onOpenAssistantRentree }) {
   return (
     <div style={{ padding: 18 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
         <QuickTile Icon={Timer} label="Minuteur" onClick={() => onOpenOutil("minuteur")} tone="minuteur" />
-        <QuickTile Icon={Flag} label="ChronomÃ¨tre" onClick={() => onOpenOutil("chrono")} tone="chrono" />
+        <QuickTile Icon={Flag} label="Chronomètre" onClick={() => onOpenOutil("chrono")} tone="chrono" />
         <QuickTile Icon={FileText} label="Bloc-note" onClick={() => onOpenOutil("blocnote")} tone="blocnote" />
-        <QuickTile Icon={Table} label="Ã‰diteur de tableau" onClick={onOpenEvaluations} tone="documents" />
+        <QuickTile Icon={Table} label="Éditeur de tableau" onClick={onOpenEvaluations} tone="documents" />
         <QuickTile Icon={Calendar} label="Emploi du temps" onClick={onOpenEdt} tone="classes" />
-        <QuickTile Icon={GraduationCap} label="Assistant de rentrÃ©e" onClick={onOpenAssistantRentree} tone="appel" />
+        <QuickTile Icon={GraduationCap} label="Assistant de rentrée" onClick={onOpenAssistantRentree} tone="appel" />
       </div>
     </div>
   );
@@ -1636,7 +1636,7 @@ const PRESETS = {
   simple: { label: "Simple", effortMin: 1, effortSec: 0, recupMin: 0, recupSec: 30, repetitions: 8 },
   tabata: { label: "Tabata", effortMin: 0, effortSec: 20, recupMin: 0, recupSec: 10, repetitions: 8 },
   emom: { label: "EMOM", effortMin: 1, effortSec: 0, recupMin: 0, recupSec: 0, repetitions: 10 },
-  vma4x3: { label: "Test VMA 4Ã—3'", effortMin: 3, effortSec: 0, recupMin: 3, recupSec: 30, repetitions: 4 },
+  vma4x3: { label: "Test VMA 4×3'", effortMin: 3, effortSec: 0, recupMin: 3, recupSec: 30, repetitions: 4 },
   vaussenat: { label: "Vaussenat", effortMin: 3, effortSec: 0, recupMin: 1, recupSec: 0, repetitions: 12 },
 };
 
@@ -1759,11 +1759,11 @@ function MinuteurScreen() {
         {champ("Effort sec", effortSec, setEffortSec, 59)}
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        {champ("RÃ©cup min", recupMin, setRecupMin, 59)}
-        {champ("RÃ©cup sec", recupSec, setRecupSec, 59)}
+        {champ("Récup min", recupMin, setRecupMin, 59)}
+        {champ("Récup sec", recupSec, setRecupSec, 59)}
       </div>
       <div style={{ marginBottom: 20 }}>
-        {champRepetitions("RÃ©pÃ©titions", repetitions, setRepetitions, 99)}
+        {champRepetitions("Répétitions", repetitions, setRepetitions, 99)}
       </div>
 
       <div style={{
@@ -1772,7 +1772,7 @@ function MinuteurScreen() {
         borderRadius: 18, padding: "26px 16px", textAlign: "center", marginBottom: 16,
       }}>
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: phase === "effort" ? "var(--st-tenue-c)" : "var(--st-dispense-c)", marginBottom: 6 }}>
-          {phase === "effort" ? "Effort" : "RÃ©cupÃ©ration"} Â· {repActuelle}/{repetitions}
+          {phase === "effort" ? "Effort" : "Récupération"} · {repActuelle}/{repetitions}
         </div>
         <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 56, color: INK, lineHeight: 1 }}>
           {pad2(Math.floor(restant / 60))}:{pad2(restant % 60)}
@@ -1790,14 +1790,14 @@ function MinuteurScreen() {
           onClick={running ? pause : start}
           style={{ flex: 1, height: 52, borderRadius: 14, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
-          {running ? <Pause size={20} /> : <Play size={20} />} {running ? "Pause" : "DÃ©marrer"}
+          {running ? <Pause size={20} /> : <Play size={20} />} {running ? "Pause" : "Démarrer"}
         </button>
       </div>
     </div>
   );
 }
 
-// ---------- Outil : ChronomÃ¨tre multi-temps avec classement et vitesse ----------
+// ---------- Outil : Chronomètre multi-temps avec classement et vitesse ----------
 function fmtChrono(ms) {
   const totalCs = Math.floor(ms / 10);
   const cs = totalCs % 100;
@@ -1873,7 +1873,7 @@ function ChronoScreen({ classes, updateClasse }) {
     setDemandeSauvegarde(false);
     setChoixOuvert(false);
     setTitreChoisi("");
-    setConfirmation(`Classement enregistrÃ© dans Â« ${classe.nom} Â».`);
+    setConfirmation(`Classement enregistré dans « ${classe.nom} ».`);
   };
 
   return (
@@ -1901,7 +1901,7 @@ function ChronoScreen({ classes, updateClasse }) {
           onClick={running ? stop : start}
           style={{ flex: 1, height: 52, borderRadius: 14, border: "none", background: running ? "var(--st-absent-c)" : PRIMARY, color: "#fff", fontWeight: 700, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
-          {running ? <Pause size={20} /> : <Play size={20} />} {running ? "ArrÃªter" : "DÃ©part"}
+          {running ? <Pause size={20} /> : <Play size={20} />} {running ? "Arrêter" : "Départ"}
         </button>
         <button
           onClick={prendreTemps}
@@ -1917,7 +1917,7 @@ function ChronoScreen({ classes, updateClasse }) {
           <div style={{ fontSize: 13, color: INK, fontWeight: 600 }}>Enregistrer cette course ?</div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setDemandeSauvegarde(false)} style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${LINE}`, background: CARD, color: INK, fontSize: 12.5, cursor: "pointer" }}>Non</button>
-            <button onClick={() => setChoixOuvert(true)} style={{ padding: "7px 12px", borderRadius: 8, border: "none", background: PRIMARY, color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>Oui â†’</button>
+            <button onClick={() => setChoixOuvert(true)} style={{ padding: "7px 12px", borderRadius: 8, border: "none", background: PRIMARY, color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>Oui →</button>
           </div>
         </div>
       )}
@@ -1928,7 +1928,7 @@ function ChronoScreen({ classes, updateClasse }) {
           <input
             value={titreChoisi}
             onChange={(e) => setTitreChoisi(e.target.value)}
-            placeholder="ex : Test 50m â€” rentrÃ©e"
+            placeholder="ex : Test 50m — rentrée"
             style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}
           />
           <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 8 }}>Dans quelle classe / groupe classe ?</div>
@@ -1947,7 +1947,7 @@ function ChronoScreen({ classes, updateClasse }) {
       {temps.length > 0 && (
         <div style={{ border: `1px solid ${LINE}`, borderRadius: 12, overflow: "hidden" }}>
           <div style={{ display: "grid", gridTemplateColumns: "34px 1fr 0.8fr 0.8fr 26px", padding: "8px 8px", background: PRIMARY_SOFT, fontSize: 10.5, fontWeight: 700, color: PRIMARY, textTransform: "uppercase" }}>
-            <div>Rg</div><div>Coureur(s) Â· temps</div><div>Ã‰cart</div><div>Vitesse</div><div />
+            <div>Rg</div><div>Coureur(s) · temps</div><div>Écart</div><div>Vitesse</div><div />
           </div>
           {temps.map((t, i) => {
             const prev = i > 0 ? temps[i - 1].ms : 0;
@@ -1967,8 +1967,8 @@ function ChronoScreen({ classes, updateClasse }) {
                     />
                   )}
                 </div>
-                <div style={{ color: "var(--muted-soft)" }}>{i === 0 ? "â€”" : `+${fmtChrono(ecart)}`}</div>
-                <div style={{ fontWeight: 600 }}>{v ? `${v.toFixed(1)} km/h` : "â€”"}</div>
+                <div style={{ color: "var(--muted-soft)" }}>{i === 0 ? "—" : `+${fmtChrono(ecart)}`}</div>
+                <div style={{ fontWeight: 600 }}>{v ? `${v.toFixed(1)} km/h` : "—"}</div>
                 <button onClick={() => setTemps(temps.filter((x) => x.id !== t.id))} style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer" }}>
                   <Trash2 size={14} />
                 </button>
@@ -1987,7 +1987,7 @@ function ChronoScreen({ classes, updateClasse }) {
   );
 }
 
-// ---------- Ã‰cran : Fiche chronomÃ¨tre sauvegardÃ©e (consultation + impression) ----------
+// ---------- Écran : Fiche chronomètre sauvegardée (consultation + impression) ----------
 function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
   const [printMode, setPrintMode] = useState(false);
   const vitesse = (ms) => {
@@ -2001,7 +2001,7 @@ function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
   const renommerTemps = (id, noms) => majFiche({ temps: fiche.temps.map((t) => t.id === id ? { ...t, noms } : t) });
   const supprimerTemps = (id) => majFiche({ temps: fiche.temps.filter((t) => t.id !== id) });
   const supprimerFiche = () => {
-    if (!confirm("Supprimer dÃ©finitivement cette fiche chronomÃ¨tre ?")) return;
+    if (!confirm("Supprimer définitivement cette fiche chronomètre ?")) return;
     updateClasse({ ...classe, chronos: classe.chronos.filter((f) => f.id !== fiche.id) });
     onDeleted();
   };
@@ -2016,8 +2016,8 @@ function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
             <Printer size={16} /> Imprimer
           </button>
         </div>
-        <h2 style={{ fontFamily: "'Oswald', sans-serif" }}>{fiche.titre ? fiche.titre : `${classe.nom} â€” ChronomÃ©trage`}</h2>
-        <div style={{ marginBottom: 10, color: "#444" }}>{fiche.titre && `${classe.nom} Â· `}{fmtDateHeure(fiche.date)} Â· Distance : {fiche.distance} m</div>
+        <h2 style={{ fontFamily: "'Oswald', sans-serif" }}>{fiche.titre ? fiche.titre : `${classe.nom} — Chronométrage`}</h2>
+        <div style={{ marginBottom: 10, color: "#444" }}>{fiche.titre && `${classe.nom} · `}{fmtDateHeure(fiche.date)} · Distance : {fiche.distance} m</div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
@@ -2031,9 +2031,9 @@ function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
             {fiche.temps.map((t, i) => (
               <tr key={t.id}>
                 <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{pad2(i + 1)}</td>
-                <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{t.noms || "â€”"}</td>
+                <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{t.noms || "—"}</td>
                 <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{fmtChrono(t.ms)}</td>
-                <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{vitesse(t.ms) ? `${vitesse(t.ms).toFixed(1)} km/h` : "â€”"}</td>
+                <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{vitesse(t.ms) ? `${vitesse(t.ms).toFixed(1)} km/h` : "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -2062,11 +2062,11 @@ function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
         />
       </div>
       <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 14 }}>
-        {fmtDateHeure(fiche.date)} Â· Distance : {fiche.distance} m Â· {fiche.temps.length} temps
+        {fmtDateHeure(fiche.date)} · Distance : {fiche.distance} m · {fiche.temps.length} temps
       </div>
       <div style={{ border: `1px solid ${LINE}`, borderRadius: 12, overflow: "hidden" }}>
         <div style={{ display: "grid", gridTemplateColumns: "30px 1fr 0.7fr 26px", padding: "8px", background: PRIMARY_SOFT, fontSize: 10.5, fontWeight: 700, color: PRIMARY, textTransform: "uppercase" }}>
-          <div>Rg</div><div>Coureur(s) Â· temps</div><div>Vitesse</div><div />
+          <div>Rg</div><div>Coureur(s) · temps</div><div>Vitesse</div><div />
         </div>
         {fiche.temps.map((t, i) => (
           <div key={t.id} style={{ display: "grid", gridTemplateColumns: "30px 1fr 0.7fr 26px", padding: "8px", borderTop: `1px solid ${LINE}`, fontSize: 12.5, alignItems: "center" }}>
@@ -2080,7 +2080,7 @@ function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
                 style={{ width: "100%", marginTop: 3, padding: "5px 7px", borderRadius: 6, border: `1px solid ${LINE}`, fontSize: 11.5, background: CARD, color: INK }}
               />
             </div>
-            <div style={{ fontWeight: 600 }}>{vitesse(t.ms) ? `${vitesse(t.ms).toFixed(1)} km/h` : "â€”"}</div>
+            <div style={{ fontWeight: 600 }}>{vitesse(t.ms) ? `${vitesse(t.ms).toFixed(1)} km/h` : "—"}</div>
             <button onClick={() => supprimerTemps(t.id)} style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer" }}>
               <Trash2 size={14} />
             </button>
@@ -2091,7 +2091,7 @@ function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
   );
 }
 
-// ---------- Outil : Bloc-note (texte + photo/vidÃ©o, sauvegardÃ© dans une classe) ----------
+// ---------- Outil : Bloc-note (texte + photo/vidéo, sauvegardé dans une classe) ----------
 function BlocNoteScreen({ classes, updateClasse }) {
   const [texte, setTexte] = useState("");
   const [medias, setMedias] = useState([]); // [{id, type, data}]
@@ -2124,7 +2124,7 @@ function BlocNoteScreen({ classes, updateClasse }) {
     if (!classe) return;
     const note = { id: uid(), date: nowISO(), titre: titreChoisi.trim(), texte, medias };
     updateClasse({ ...classe, blocNotes: [note, ...(classe.blocNotes || [])] });
-    setConfirmation(`Note enregistrÃ©e dans Â« ${classe.nom} Â».`);
+    setConfirmation(`Note enregistrée dans « ${classe.nom} ».`);
     setTexte("");
     setMedias([]);
     setTitreChoisi("");
@@ -2140,14 +2140,20 @@ function BlocNoteScreen({ classes, updateClasse }) {
         value={texte}
         onChange={(e) => setTexte(e.target.value)}
         rows={6}
-        placeholder="Observations, consignes, bilan de sÃ©anceâ€¦"
+        placeholder="Observations, consignes, bilan de séance…"
         style={{ width: "100%", padding: 10, borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 14, fontFamily: "inherit", resize: "vertical", marginBottom: 14, background: CARD, color: INK }}
       />
 
-      <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "11px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: PRIMARY, fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 14 }}>
-        <input type="file" accept="image/*,video/*" capture="environment" multiple onChange={(e) => e.target.files.length && ajouterMedias(e.target.files)} style={{ display: "none" }} />
-        <Paperclip size={15} /> Ajouter une photo ou une vidÃ©o
-      </label>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: PRIMARY, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
+          <input type="file" accept="image/*,video/*" capture="environment" onChange={(e) => e.target.files.length && ajouterMedias(e.target.files)} style={{ display: "none" }} />
+          <Camera size={15} /> Prendre une photo
+        </label>
+        <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: PRIMARY, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
+          <input type="file" accept="image/*,video/*" multiple onChange={(e) => e.target.files.length && ajouterMedias(e.target.files)} style={{ display: "none" }} />
+          <Paperclip size={15} /> Bibliothèque
+        </label>
+      </div>
 
       {medias.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8, marginBottom: 16 }}>
@@ -2192,7 +2198,7 @@ function BlocNoteScreen({ classes, updateClasse }) {
           <input
             value={titreChoisi}
             onChange={(e) => setTitreChoisi(e.target.value)}
-            placeholder="ex : Bilan sÃ©ance badminton"
+            placeholder="ex : Bilan séance badminton"
             style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}
           />
           <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 8 }}>Dans quelle classe / groupe classe ?</div>
@@ -2209,7 +2215,7 @@ function BlocNoteScreen({ classes, updateClasse }) {
   );
 }
 
-// ---------- Ã‰cran : Bloc-note sauvegardÃ© (consultation + Ã©dition) ----------
+// ---------- Écran : Bloc-note sauvegardé (consultation + édition) ----------
 function BlocNoteFicheScreen({ classe, note, updateClasse, onDeleted }) {
   const [texte, setTexte] = useState(note.texte || "");
   const [titre, setTitre] = useState(note.titre || "");
@@ -2219,7 +2225,7 @@ function BlocNoteFicheScreen({ classe, note, updateClasse, onDeleted }) {
   };
   const supprimerMedia = (id) => majNote({ medias: note.medias.filter((m) => m.id !== id) });
   const supprimerNote = () => {
-    if (!confirm("Supprimer dÃ©finitivement cette note ?")) return;
+    if (!confirm("Supprimer définitivement cette note ?")) return;
     updateClasse({ ...classe, blocNotes: classe.blocNotes.filter((n) => n.id !== note.id) });
     onDeleted();
   };
@@ -2304,7 +2310,7 @@ function rotateDataUrl(dataUrl, angle) {
   });
 }
 
-// ---------- FenÃªtre : Ã©dition rapide d'une photo avant ajout ----------
+// ---------- Fenêtre : édition rapide d'une photo avant ajout ----------
 function PhotoEditModal({ dataUrl, onCancel, onConfirm }) {
   const [angle, setAngle] = useState(0);
   const [preview, setPreview] = useState(dataUrl);
@@ -2346,7 +2352,7 @@ function PhotoEditModal({ dataUrl, onCancel, onConfirm }) {
   );
 }
 
-// ---------- Ã‰cran : Documents (fichiers + dossiers thÃ©matiques) ----------
+// ---------- Écran : Documents (fichiers + dossiers thématiques) ----------
 function getNode(root, path) {
   let node = root;
   for (const seg of path) {
@@ -2366,7 +2372,7 @@ function updateAtPath(node, path, updater) {
 }
 
 function ajouterDocDansDossierAuto(biblio, cheminNoms, doc) {
-  // cheminNoms ex: ["Dispenses EPS", "2nde 4"] â€” crÃ©e les dossiers manquants au passage
+  // cheminNoms ex: ["Dispenses EPS", "2nde 4"] — crée les dossiers manquants au passage
   if (cheminNoms.length === 0) return { ...biblio, documents: [doc, ...biblio.documents] };
   const [nomCourant, ...reste] = cheminNoms;
   let dossiers = [...biblio.dossiers];
@@ -2387,8 +2393,8 @@ function retirerDocParId(node, docId) {
   };
 }
 
-// ---------- FenÃªtre : choix de suppression liÃ©e (photo de dispense â†” document) ----------
-// ---------- FenÃªtre : choix rapide dispense (jour seul ou pÃ©riode + photo) depuis l'appel ----------
+// ---------- Fenêtre : choix de suppression liée (photo de dispense ↔ document) ----------
+// ---------- Fenêtre : choix rapide dispense (jour seul ou période + photo) depuis l'appel ----------
 function DispenseChoiceModal({ eleve, dateAppel, dispenseExistante, onClose, onJourSeul, onValiderPeriode, onConfirmerExistante, onAjouterPhotoExistante, onRedefinirPeriode }) {
   // mode: null (accueil), "nouvelle-periode", "photo-existante", "redefinir-periode"
   const [mode, setMode] = useState(null);
@@ -2413,25 +2419,25 @@ function DispenseChoiceModal({ eleve, dateAppel, dispenseExistante, onClose, onJ
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 75, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, maxHeight: "85vh", overflowY: "auto", background: CARD, borderRadius: "18px 18px 0 0", padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Dispense â€” {eleve.prenom} {eleve.nom}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Dispense — {eleve.prenom} {eleve.nom}</div>
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)" }}><X size={20} /></button>
         </div>
 
         {mode === null && dispenseExistante && (
           <div>
             <div style={{ background: "var(--st-dispense-bg)", border: `1px solid var(--st-dispense-bd)`, borderRadius: 10, padding: 10, marginBottom: 14, fontSize: 12.5, color: "var(--st-dispense-c)" }}>
-              PÃ©riode dÃ©jÃ  dÃ©finie : du {new Date(dispenseExistante.dateDebut).toLocaleDateString("fr-FR")} au {new Date(dispenseExistante.dateFin).toLocaleDateString("fr-FR")}
-              {" Â· "}{dispenseExistante.photos.length > 0 ? `${dispenseExistante.photos.length} photo(s)` : "aucune photo pour l'instant"}
+              Période déjà définie : du {new Date(dispenseExistante.dateDebut).toLocaleDateString("fr-FR")} au {new Date(dispenseExistante.dateFin).toLocaleDateString("fr-FR")}
+              {" · "}{dispenseExistante.photos.length > 0 ? `${dispenseExistante.photos.length} photo(s)` : "aucune photo pour l'instant"}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button onClick={onConfirmerExistante} style={{ ...boutonStyle, border: "none", background: "var(--st-dispense-c)", color: "#fff" }}>
-                Marquer dispensÃ© (pÃ©riode actuelle)
+                Marquer dispensé (période actuelle)
               </button>
               <button onClick={() => setMode("photo-existante")} style={{ ...boutonStyle, border: `1px solid ${LINE}`, background: CARD, color: INK }}>
                 Ajouter une photo justificative
               </button>
               <button onClick={() => setMode("redefinir-periode")} style={{ ...boutonStyle, border: `1px solid ${LINE}`, background: CARD, color: INK, fontSize: 13 }}>
-                RedÃ©finir cette pÃ©riode
+                Redéfinir cette période
               </button>
             </div>
           </div>
@@ -2440,10 +2446,10 @@ function DispenseChoiceModal({ eleve, dateAppel, dispenseExistante, onClose, onJ
         {mode === null && !dispenseExistante && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button onClick={onJourSeul} style={{ ...boutonStyle, border: `1px solid ${LINE}`, background: CARD, color: INK }}>
-              DispensÃ© aujourd'hui seulement
+              Dispensé aujourd'hui seulement
             </button>
             <button onClick={() => setMode("nouvelle-periode")} style={{ ...boutonStyle, border: "none", background: "var(--st-dispense-c)", color: "#fff" }}>
-              Sur une pÃ©riode Ã  dÃ©finir
+              Sur une période à définir
             </button>
           </div>
         )}
@@ -2531,7 +2537,7 @@ function DispenseChoiceModal({ eleve, dateAppel, dispenseExistante, onClose, onJ
                 onClick={() => onValiderPeriode({ dateDebut, dateFin: dateFin || dateDebut, photo: photoStage })}
                 style={{ flex: 2, padding: "11px 0", borderRadius: 10, border: "none", background: "var(--st-dispense-c)", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
               >
-                Valider la pÃ©riode
+                Valider la période
               </button>
             </div>
           </div>
@@ -2544,7 +2550,7 @@ function DispenseChoiceModal({ eleve, dateAppel, dispenseExistante, onClose, onJ
   );
 }
 
-// ---------- FenÃªtre : sÃ©lection d'une liste d'Ã©lÃ©ments (ex : Ã©lÃ¨ves inclus dans une formule) ----------
+// ---------- Fenêtre : sélection d'une liste d'éléments (ex : élèves inclus dans une formule) ----------
 function SelectionModal({ titre, items, selectionnes, avecPoids, poidsInitiaux, onClose, onValider }) {
   const [selection, setSelection] = useState(() => new Set(selectionnes && selectionnes.length ? selectionnes : items.map((i) => i.id)));
   const [poids, setPoids] = useState(() => ({ ...(poidsInitiaux || {}) }));
@@ -2566,11 +2572,11 @@ function SelectionModal({ titre, items, selectionnes, avecPoids, poidsInitiaux, 
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)" }}><X size={20} /></button>
         </div>
         {avecPoids && (
-          <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 10 }}>Ajuste le coefficient de chaque Ã©lÃ©ment cochÃ© (1 par dÃ©faut).</div>
+          <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 10 }}>Ajuste le coefficient de chaque élément coché (1 par défaut).</div>
         )}
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
           <button onClick={toutSelectionner} style={{ flex: 1, padding: "7px 0", borderRadius: 8, border: `1px solid ${LINE}`, background: CARD, color: PRIMARY, fontWeight: 600, fontSize: 12, cursor: "pointer" }}>Tout cocher</button>
-          <button onClick={toutDeselectionner} style={{ flex: 1, padding: "7px 0", borderRadius: 8, border: `1px solid ${LINE}`, background: CARD, color: INK, fontWeight: 600, fontSize: 12, cursor: "pointer" }}>Tout dÃ©cocher</button>
+          <button onClick={toutDeselectionner} style={{ flex: 1, padding: "7px 0", borderRadius: 8, border: `1px solid ${LINE}`, background: CARD, color: INK, fontWeight: 600, fontSize: 12, cursor: "pointer" }}>Tout décocher</button>
         </div>
         {items.map((item) => (
           <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 2px" }}>
@@ -2621,7 +2627,7 @@ function LinkedDeleteModal({ message, onCancel, onOnly, onBoth, labelOnly, label
   );
 }
 
-// ---------- Vue imprimable : une ou plusieurs dispenses (Ã©lÃ¨ve/classe) ----------
+// ---------- Vue imprimable : une ou plusieurs dispenses (élève/classe) ----------
 function DispensePrintView({ items, onBack }) {
   return (
     <div style={{ padding: 24, background: "#fff" }}>
@@ -2636,7 +2642,7 @@ function DispensePrintView({ items, onBack }) {
         <div key={i} className="bloc-dispense">
           <h2 style={{ fontFamily: "'Oswald', sans-serif", marginBottom: 4 }}>{it.eleveNom}</h2>
           <div style={{ color: "#444", marginBottom: 10 }}>
-            {it.classeNom} Â· Dispense du {new Date(it.dispense.dateDebut).toLocaleDateString("fr-FR")} au {new Date(it.dispense.dateFin).toLocaleDateString("fr-FR")}
+            {it.classeNom} · Dispense du {new Date(it.dispense.dateDebut).toLocaleDateString("fr-FR")} au {new Date(it.dispense.dateFin).toLocaleDateString("fr-FR")}
           </div>
           {it.dispense.photos.length > 0 ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
@@ -2645,7 +2651,7 @@ function DispensePrintView({ items, onBack }) {
               ))}
             </div>
           ) : (
-            <div style={{ color: "#888", fontSize: 13 }}>Aucune photo jointe Ã  cette dispense.</div>
+            <div style={{ color: "#888", fontSize: 13 }}>Aucune photo jointe à cette dispense.</div>
           )}
           <hr style={{ marginTop: 20, border: "none", borderTop: "1px solid #ddd" }} />
         </div>
@@ -2654,7 +2660,7 @@ function DispensePrintView({ items, onBack }) {
   );
 }
 
-// ---------- Vue imprimable : sÃ©lection libre de documents ----------
+// ---------- Vue imprimable : sélection libre de documents ----------
 function DocumentsPrintView({ documents, onBack }) {
   const imprimables = documents.filter((d) => d.type === "image" || d.extension === "PDF");
   const ignores = documents.filter((d) => !(d.type === "image" || d.extension === "PDF"));
@@ -2669,7 +2675,7 @@ function DocumentsPrintView({ documents, onBack }) {
       </div>
       {ignores.length > 0 && (
         <div className="no-print" style={{ background: "#FFF6E5", border: "1px solid #F0D48A", borderRadius: 8, padding: 10, marginBottom: 16, fontSize: 13, color: "#7A5C00" }}>
-          {ignores.length} fichier(s) non imprimable(s) directement ici (vidÃ©o, Excel, Wordâ€¦) : {ignores.map((d) => d.nom).join(", ")}. Utilisez le tÃ©lÃ©chargement pour les ouvrir et les imprimer depuis leur application.
+          {ignores.length} fichier(s) non imprimable(s) directement ici (vidéo, Excel, Word…) : {ignores.map((d) => d.nom).join(", ")}. Utilisez le téléchargement pour les ouvrir et les imprimer depuis leur application.
         </div>
       )}
       {imprimables.map((d) => (
@@ -2682,12 +2688,12 @@ function DocumentsPrintView({ documents, onBack }) {
           )}
         </div>
       ))}
-      {imprimables.length === 0 && <div style={{ color: "#888" }}>Aucun fichier imprimable dans la sÃ©lection.</div>}
+      {imprimables.length === 0 && <div style={{ color: "#888" }}>Aucun fichier imprimable dans la sélection.</div>}
     </div>
   );
 }
 
-// ---------- FenÃªtre : choisir un dossier de destination (dÃ©placer un document) ----------
+// ---------- Fenêtre : choisir un dossier de destination (déplacer un document) ----------
 function MoveModal({ biblio, sourcePath, onClose, onMove }) {
   const [destPath, setDestPath] = useState([]);
   const node = getNode(biblio, destPath);
@@ -2696,7 +2702,7 @@ function MoveModal({ biblio, sourcePath, onClose, onMove }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 65, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, maxHeight: "80vh", overflowY: "auto", background: CARD, borderRadius: "18px 18px 0 0", padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>DÃ©placer versâ€¦</div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Déplacer vers…</div>
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)" }}><X size={20} /></button>
         </div>
 
@@ -2725,21 +2731,21 @@ function MoveModal({ biblio, sourcePath, onClose, onMove }) {
           disabled={destPath.length === sourcePath.length && destPath.every((s, i) => s.id === sourcePath[i]?.id)}
           style={{ width: "100%", marginTop: 10, padding: "12px 0", borderRadius: 12, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer" }}
         >
-          DÃ©placer ici
+          Déplacer ici
         </button>
       </div>
     </div>
   );
 }
 
-// ---------- Ã‰cran : Documents (fichiers + dossiers thÃ©matiques imbriquÃ©s) ----------
+// ---------- Écran : Documents (fichiers + dossiers thématiques imbriqués) ----------
 function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpenRecapDispenses, onOpenEvaluations, onOpenEvaluation }) {
   const [path, setPath] = useState([]); // [{id, nom}, ...]
   const [formDossierOuvert, setFormDossierOuvert] = useState(false);
   const [dossierEnEdition, setDossierEnEdition] = useState(null);
   const [photoEnEdition, setPhotoEnEdition] = useState(null);
   const [docEnDeplacement, setDocEnDeplacement] = useState(null);
-  const [confirmSuppressionDoc, setConfirmSuppressionDoc] = useState(null); // le document liÃ© Ã  une dispense
+  const [confirmSuppressionDoc, setConfirmSuppressionDoc] = useState(null); // le document lié à une dispense
   const [modeSelection, setModeSelection] = useState(false);
   const [selection, setSelection] = useState({});
   const [impressionDocs, setImpressionDocs] = useState(null);
@@ -2843,11 +2849,11 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
         style={{ flex: 1, minWidth: 0, cursor: doc.type === "evaluation-ref" ? "pointer" : "default" }}
       >
         <div style={{ fontSize: 13, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{doc.nom}</div>
-        <div style={{ fontSize: 10.5, color: "var(--muted-soft)" }}>{doc.extension} Â· {new Date(doc.dateAjout).toLocaleDateString("fr-FR")}</div>
+        <div style={{ fontSize: 10.5, color: "var(--muted-soft)" }}>{doc.extension} · {new Date(doc.dateAjout).toLocaleDateString("fr-FR")}</div>
       </div>
       {!modeSelection && (
         <>
-          <button onClick={() => setDocEnDeplacement(doc)} title="DÃ©placer" style={{ border: "none", background: "none", color: PRIMARY, display: "flex", padding: 4, cursor: "pointer" }}>
+          <button onClick={() => setDocEnDeplacement(doc)} title="Déplacer" style={{ border: "none", background: "none", color: PRIMARY, display: "flex", padding: 4, cursor: "pointer" }}>
             <FolderOpen size={16} />
           </button>
           {doc.type !== "evaluation-ref" && (
@@ -2871,8 +2877,8 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
     <div style={{ padding: 16 }}>
       {path.length === 0 && (
         <button onClick={onOpenEvaluations} style={{ width: "100%", marginBottom: 12, padding: "12px 12px", borderRadius: 10, border: "none", background: `var(--tile-blocnote)`, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
-          <Folder size={18} /> Ã‰diteur de tableau
-          <span style={{ marginLeft: "auto", fontSize: 11, fontWeight: 500, opacity: 0.9 }}>Tableaux de notation â†’</span>
+          <Folder size={18} /> Éditeur de tableau
+          <span style={{ marginLeft: "auto", fontSize: 11, fontWeight: 500, opacity: 0.9 }}>Tableaux de notation →</span>
         </button>
       )}
 
@@ -2888,7 +2894,7 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
 
       {estDossierDispenses && (
         <button onClick={onOpenRecapDispenses} style={{ width: "100%", marginBottom: 12, padding: "11px 0", borderRadius: 10, border: "none", background: `var(--tile-chrono)`, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <FileText size={16} /> RÃ©capitulatif de toutes les dispenses
+          <FileText size={16} /> Récapitulatif de toutes les dispenses
         </button>
       )}
 
@@ -2896,7 +2902,7 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
         {modeSelection ? (
           <>
             <button onClick={quitterModeSelection} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${LINE}`, background: CARD, color: INK, fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>
-              Annuler la sÃ©lection
+              Annuler la sélection
             </button>
             <button
               onClick={imprimerSelection}
@@ -2908,7 +2914,7 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
           </>
         ) : (
           <button onClick={() => setModeSelection(true)} style={{ width: "100%", padding: "10px 0", borderRadius: 10, border: `1px solid ${LINE}`, background: CARD, color: PRIMARY, fontWeight: 600, fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <Printer size={14} /> SÃ©lectionner des fichiers Ã  imprimer
+            <Printer size={14} /> Sélectionner des fichiers à imprimer
           </button>
         )}
       </div>
@@ -2938,7 +2944,7 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
               <div onClick={() => setPath([...path, { id: d.id, nom: d.nom }])} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, cursor: "pointer", minWidth: 0 }}>
                 <Folder size={18} color={PRIMARY} />
                 <div style={{ fontSize: 13.5, color: INK, fontWeight: 600 }}>{d.nom}</div>
-                <div style={{ fontSize: 11.5, color: "var(--muted-soft)" }}>({d.documents.length}{d.dossiers.length > 0 ? ` Â· ${d.dossiers.length} sous-dossier(s)` : ""})</div>
+                <div style={{ fontSize: 11.5, color: "var(--muted-soft)" }}>({d.documents.length}{d.dossiers.length > 0 ? ` · ${d.dossiers.length} sous-dossier(s)` : ""})</div>
               </div>
               <button onClick={() => setDossierEnEdition(d)} style={{ border: "none", background: "none", color: PRIMARY, cursor: "pointer", padding: 4 }}>
                 <Pencil size={14} />
@@ -2969,10 +2975,10 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
       {formDossierOuvert && (
         <FormModal
           title={path.length > 0 ? "Nouveau sous-dossier" : "Nouveau dossier"}
-          fields={[{ key: "nom", label: "Nom du dossier", placeholder: "ex : Programmations, Photos matÃ©rielâ€¦", required: true }]}
+          fields={[{ key: "nom", label: "Nom du dossier", placeholder: "ex : Programmations, Photos matériel…", required: true }]}
           onClose={() => setFormDossierOuvert(false)}
           onSubmit={creerDossier}
-          submitLabel="CrÃ©er le dossier"
+          submitLabel="Créer le dossier"
         />
       )}
       {dossierEnEdition && (
@@ -2992,9 +2998,9 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
       )}
       {confirmSuppressionDoc && (
         <LinkedDeleteModal
-          message="Ce document est liÃ© Ã  une dispense sur la fiche d'un Ã©lÃ¨ve. Que veux-tu supprimer ?"
+          message="Ce document est lié à une dispense sur la fiche d'un élève. Que veux-tu supprimer ?"
           labelOnly="Seulement ici, dans Documents"
-          labelBoth="Ici et sur la fiche Ã©lÃ¨ve"
+          labelBoth="Ici et sur la fiche élève"
           onCancel={() => setConfirmSuppressionDoc(null)}
           onOnly={supprimerDocSeul}
           onBoth={supprimerDocEtPhoto}
@@ -3004,8 +3010,8 @@ function DocumentsScreen({ biblio, setBiblio, onSupprimerPhotoDeDispense, onOpen
   );
 }
 
-// ---------- FenÃªtre : annotation rapide ----------
-// ---------- FenÃªtre gÃ©nÃ©rique de saisie (remplace les prompt() natifs) ----------
+// ---------- Fenêtre : annotation rapide ----------
+// ---------- Fenêtre générique de saisie (remplace les prompt() natifs) ----------
 function FormModal({ title, fields, onClose, onSubmit, submitLabel = "Valider" }) {
   const [values, setValues] = useState(() => {
     const init = {};
@@ -3038,7 +3044,7 @@ function FormModal({ title, fields, onClose, onSubmit, submitLabel = "Valider" }
                 onChange={(e) => setVal(f.key, e.target.value)}
                 style={{ width: "100%", padding: 10, borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 14, background: CARD, color: INK }}
               >
-                <option value="">â€”</option>
+                <option value="">—</option>
                 {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             ) : f.type === "date" ? (
@@ -3081,7 +3087,7 @@ function AnnotationModal({ eleve, activite, onClose, onSave }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(27,43,39,0.45)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, maxHeight: "85vh", overflowY: "auto", background: CARD, borderRadius: "18px 18px 0 0", padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Annotation â€” {eleve.prenom} {eleve.nom}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Annotation — {eleve.prenom} {eleve.nom}</div>
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)" }}><X size={20} /></button>
         </div>
         {activite && (
@@ -3094,7 +3100,7 @@ function AnnotationModal({ eleve, activite, onClose, onSave }) {
             <ThumbsUp size={15} /> Positif
           </button>
           <button onClick={() => setType("negatif")} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: `1.5px solid ${type === "negatif" ? "var(--st-absent-c)" : LINE}`, background: type === "negatif" ? "var(--st-absent-bg)" : CARD, color: "var(--st-absent-c)", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}>
-            <ThumbsDown size={15} /> NÃ©gatif
+            <ThumbsDown size={15} /> Négatif
           </button>
         </div>
         <textarea
@@ -3102,7 +3108,7 @@ function AnnotationModal({ eleve, activite, onClose, onSave }) {
           value={texte}
           onChange={(e) => setTexte(e.target.value)}
           rows={3}
-          placeholder="Ex : trÃ¨s bon esprit d'Ã©quipe, entraide spontanÃ©eâ€¦"
+          placeholder="Ex : très bon esprit d'équipe, entraide spontanée…"
           style={{ width: "100%", padding: 10, borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 13.5, fontFamily: "inherit", resize: "vertical", marginBottom: 12 }}
         />
         <button
@@ -3116,19 +3122,19 @@ function AnnotationModal({ eleve, activite, onClose, onSave }) {
   );
 }
 
-// ---------- Ã‰cran : Fiche gÃ©nÃ©rale du cycle (classe entiÃ¨re) ----------
-// ---------- Ã‰cran : rÃ©capitulatif de toutes les dispenses (classÃ© par classe/Ã©lÃ¨ve) ----------
-// ---------- Ã‰valuations : moteur de calcul des colonnes formule ----------
+// ---------- Écran : Fiche générale du cycle (classe entière) ----------
+// ---------- Écran : récapitulatif de toutes les dispenses (classé par classe/élève) ----------
+// ---------- Évaluations : moteur de calcul des colonnes formule ----------
 const OPERATIONS = {
   somme: { label: "Somme (+)", symbole: "+" },
-  difference: { label: "DiffÃ©rence (âˆ’)", symbole: "âˆ’" },
-  produit: { label: "Produit (Ã—)", symbole: "Ã—" },
-  quotient: { label: "Quotient (Ã·)", symbole: "Ã·" },
+  difference: { label: "Différence (−)", symbole: "−" },
+  produit: { label: "Produit (×)", symbole: "×" },
+  quotient: { label: "Quotient (÷)", symbole: "÷" },
   moyenne: { label: "Moyenne", symbole: "moy." },
-  moyenne_ponderee: { label: "Moyenne pondÃ©rÃ©e (par coefficients)", symbole: "moy. pond." },
+  moyenne_ponderee: { label: "Moyenne pondérée (par coefficients)", symbole: "moy. pond." },
   maximum: { label: "Maximum", symbole: "max" },
   minimum: { label: "Minimum", symbole: "min" },
-  coefficient: { label: "Coefficient (Ã— constante)", symbole: "coef." },
+  coefficient: { label: "Coefficient (× constante)", symbole: "coef." },
 };
 
 function appliquerOperation(operation, nums, constante, poids) {
@@ -3208,7 +3214,7 @@ function nouvelleEvaluationVide(titre, classe) {
   };
 }
 
-// ---------- Ã‰cran : liste des Ã©valuations (contenu du dossier "Ã‰valuation") ----------
+// ---------- Écran : liste des évaluations (contenu du dossier "Évaluation") ----------
 // ---------- Outil : Emploi du temps ----------
 const JOURS = [
   { key: "LU", label: "Lundi" },
@@ -3251,7 +3257,7 @@ function estJourFerie(edt, date) {
   return (edt.feries || []).find((f) => f.date === iso) || null;
 }
 
-// ---------- Ã‰cran : Assistant de rentrÃ©e ----------
+// ---------- Écran : Assistant de rentrée ----------
 function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, classes }) {
   const [nomEtab, setNomEtab] = useState(etablissement.nom || "");
   const [anneeTxt, setAnneeTxt] = useState(etablissement.anneeScolaire || "");
@@ -3297,11 +3303,11 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
 
   return (
     <div style={{ padding: 16, paddingBottom: 40 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Ã‰tablissement</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Établissement</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         <input
           value={nomEtab} onChange={(e) => setNomEtab(e.target.value)} onBlur={sauverEtablissement}
-          placeholder="Nom de l'Ã©tablissement" style={{ flex: 1.4, padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }}
+          placeholder="Nom de l'établissement" style={{ flex: 1.4, padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }}
         />
         <input
           value={anneeTxt} onChange={(e) => setAnneeTxt(e.target.value)} onBlur={sauverEtablissement}
@@ -3312,14 +3318,14 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Alternance semaine A / B</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         <div style={{ flex: 1.3 }}>
-          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>1er jour de la rentrÃ©e</div>
+          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>1er jour de la rentrée</div>
           <input
             type="date" value={edt.dateDebutAnnee || ""} onChange={(e) => setEdt({ ...edt, dateDebutAnnee: e.target.value })}
             style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }}
           />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>Semaine de dÃ©part</div>
+          <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>Semaine de départ</div>
           <div style={{ display: "flex", gap: 6 }}>
             {["A", "B"].map((s) => (
               <button
@@ -3345,47 +3351,47 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
           <Plus size={13} /> Ajouter
         </button>
       </div>
-      {(edt.vacances || []).length === 0 && <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 16 }}>Aucune pÃ©riode renseignÃ©e.</div>}
+      {(edt.vacances || []).length === 0 && <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 16 }}>Aucune période renseignée.</div>}
       {(edt.vacances || []).map((v) => (
         <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: `1px solid ${LINE}`, borderRadius: 9, marginBottom: 6, background: CARD }}>
           <div style={{ flex: 1, fontSize: 12.5, color: INK }}>
-            <b>{v.nom}</b> Â· du {new Date(v.dateDebut).toLocaleDateString("fr-FR")} au {new Date(v.dateFin).toLocaleDateString("fr-FR")}
+            <b>{v.nom}</b> · du {new Date(v.dateDebut).toLocaleDateString("fr-FR")} au {new Date(v.dateFin).toLocaleDateString("fr-FR")}
           </div>
           <button onClick={() => supprimerVacances(v.id)} style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer" }}><Trash2 size={14} /></button>
         </div>
       ))}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, marginBottom: 8 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4 }}>Jours fÃ©riÃ©s</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4 }}>Jours fériés</div>
         <button onClick={() => setFormFerieOuvert(true)} style={{ border: "none", background: "none", color: PRIMARY, fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
           <Plus size={13} /> Ajouter
         </button>
       </div>
-      {(edt.feries || []).length === 0 && <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 16 }}>Aucun jour fÃ©riÃ© renseignÃ©.</div>}
+      {(edt.feries || []).length === 0 && <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 16 }}>Aucun jour férié renseigné.</div>}
       {(edt.feries || []).map((f) => (
         <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: `1px solid ${LINE}`, borderRadius: 9, marginBottom: 6, background: CARD }}>
-          <div style={{ flex: 1, fontSize: 12.5, color: INK }}><b>{f.nom}</b> Â· {new Date(f.date).toLocaleDateString("fr-FR")}</div>
+          <div style={{ flex: 1, fontSize: 12.5, color: INK }}><b>{f.nom}</b> · {new Date(f.date).toLocaleDateString("fr-FR")}</div>
           <button onClick={() => supprimerFerie(f.id)} style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer" }}><Trash2 size={14} /></button>
         </div>
       ))}
 
       <div style={{ marginTop: 20, padding: 14, borderRadius: 12, border: `1.5px dashed ${ACCENT}`, background: ACCENT_SOFT }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: ACCENT, marginBottom: 6 }}>Nouvelle annÃ©e scolaire</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: ACCENT, marginBottom: 6 }}>Nouvelle année scolaire</div>
         <div style={{ fontSize: 12, color: "var(--muted-soft)", marginBottom: 10 }}>
-          Archive l'emploi du temps actuel (consultable ensuite dans l'historique) et dÃ©marre une nouvelle annÃ©e scolaire â€” les crÃ©neaux actuels restent en place pour que tu n'aies qu'Ã  les ajuster.
+          Archive l'emploi du temps actuel (consultable ensuite dans l'historique) et démarre une nouvelle année scolaire — les créneaux actuels restent en place pour que tu n'aies qu'à les ajuster.
         </div>
         <button onClick={() => setFormNouvelleAnneeOuvert(true)} style={{ width: "100%", padding: "10px 0", borderRadius: 9, border: "none", background: ACCENT, color: "#fff", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>
-          Archiver et commencer une nouvelle annÃ©e
+          Archiver et commencer une nouvelle année
         </button>
       </div>
 
       {(edt.historiqueAnnees || []).length > 0 && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Historique des annÃ©es</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Historique des années</div>
           {edt.historiqueAnnees.map((h) => (
             <div key={h.id} onClick={() => setHistoriqueOuvert(historiqueOuvert === h.id ? null : h.id)} style={{ border: `1px solid ${LINE}`, borderRadius: 10, padding: 10, marginBottom: 6, background: CARD, cursor: "pointer" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>{h.anneeScolaire}{h.etablissementNom ? ` â€” ${h.etablissementNom}` : ""}</div>
-              <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>ArchivÃ©e le {new Date(h.dateArchivage).toLocaleDateString("fr-FR")} Â· {h.creneaux.length} crÃ©neau(x)</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>{h.anneeScolaire}{h.etablissementNom ? ` — ${h.etablissementNom}` : ""}</div>
+              <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>Archivée le {new Date(h.dateArchivage).toLocaleDateString("fr-FR")} · {h.creneaux.length} créneau(x)</div>
               {historiqueOuvert === h.id && (
                 <div style={{ marginTop: 8, borderTop: `1px solid ${LINE}`, paddingTop: 8 }}>
                   {JOURS.map((j) => {
@@ -3395,7 +3401,7 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
                       <div key={j.key} style={{ marginBottom: 6 }}>
                         <div style={{ fontSize: 10.5, fontWeight: 700, color: PRIMARY }}>{j.label}</div>
                         {cx.map((c, i) => (
-                          <div key={i} style={{ fontSize: 11.5, color: INK }}>{c.heureDebut}â€“{c.heureFin} Â· {c.libelle}{c.activite ? ` (${c.activite})` : ""}{c.semaine ? ` [Sem. ${c.semaine}]` : ""}</div>
+                          <div key={i} style={{ fontSize: 11.5, color: INK }}>{c.heureDebut}–{c.heureFin} · {c.libelle}{c.activite ? ` (${c.activite})` : ""}{c.semaine ? ` [Sem. ${c.semaine}]` : ""}</div>
                         ))}
                       </div>
                     );
@@ -3409,7 +3415,7 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
 
       {formVacancesOuvert && (
         <FormModal
-          title="Ajouter une pÃ©riode de vacances"
+          title="Ajouter une période de vacances"
           fields={[
             { key: "nom", label: "Nom", placeholder: "ex : Vacances de la Toussaint", required: true },
             { key: "dateDebut", label: "Du", type: "date", required: true },
@@ -3422,7 +3428,7 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
       )}
       {formFerieOuvert && (
         <FormModal
-          title="Ajouter un jour fÃ©riÃ©"
+          title="Ajouter un jour férié"
           fields={[
             { key: "nom", label: "Nom", placeholder: "ex : Toussaint", required: true },
             { key: "date", label: "Date", type: "date", required: true },
@@ -3434,11 +3440,11 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
       )}
       {formNouvelleAnneeOuvert && (
         <FormModal
-          title="Nouvelle annÃ©e scolaire"
-          fields={[{ key: "nouvelleAnnee", label: "Nom de la nouvelle annÃ©e scolaire", placeholder: "ex : 2027-2028", required: true }]}
+          title="Nouvelle année scolaire"
+          fields={[{ key: "nouvelleAnnee", label: "Nom de la nouvelle année scolaire", placeholder: "ex : 2027-2028", required: true }]}
           onClose={() => setFormNouvelleAnneeOuvert(false)}
           onSubmit={archiverEtDemarrerNouvelleAnnee}
-          submitLabel="Archiver et dÃ©marrer"
+          submitLabel="Archiver et démarrer"
         />
       )}
     </div>
@@ -3495,11 +3501,11 @@ function EmploiDuTempsScreen({ classes, edt, setEdt }) {
           };
           const jourTxt = normaliser(getVal(["jour"]));
           const jourCle = JOURS.find((j) => normaliser(j.label) === jourTxt || j.key.toLowerCase() === jourTxt)?.key;
-          const heureDebut = getVal(["debut", "dÃ©but"]);
+          const heureDebut = getVal(["debut", "début"]);
           const heureFin = getVal(["fin"]);
           const classeTxt = normaliser(getVal(["classe"]));
           const classe = classes.find((c) => normaliser(c.nom) === classeTxt);
-          const activite = getVal(["activite", "activitÃ©"]);
+          const activite = getVal(["activite", "activité"]);
           if (jourCle && heureDebut && heureFin && classe) {
             nouveaux.push({ id: uid(), jour: jourCle, heureDebut, heureFin, classeId: classe.id, activite: activite || activiteActuelle(classe.id) });
           }
@@ -3514,7 +3520,7 @@ function EmploiDuTempsScreen({ classes, edt, setEdt }) {
     <div style={{ padding: 16, paddingBottom: 40 }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         <button onClick={() => setFormOuvert(true)} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <Plus size={14} /> Ajouter un crÃ©neau
+          <Plus size={14} /> Ajouter un créneau
         </button>
         <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", borderRadius: 10, border: `1px solid ${LINE}`, background: CARD, color: PRIMARY, fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>
           <input type="file" accept=".csv,.xlsx,.xls,.ods" onChange={(e) => e.target.files[0] && importerFichier(e.target.files[0])} style={{ display: "none" }} />
@@ -3524,10 +3530,10 @@ function EmploiDuTempsScreen({ classes, edt, setEdt }) {
 
       <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "9px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: "var(--muted-soft)", fontSize: 12, cursor: "pointer", marginBottom: 16 }}>
         <input type="file" accept="image/*" capture="environment" onChange={(e) => e.target.files[0] && declencherPhoto(e.target.files[0])} style={{ display: "none" }} />
-        <Camera size={13} /> {edt.photoReference ? "Changer la photo de rÃ©fÃ©rence" : "Ajouter une photo de rÃ©fÃ©rence (papier)"}
+        <Camera size={13} /> {edt.photoReference ? "Changer la photo de référence" : "Ajouter une photo de référence (papier)"}
       </label>
       {edt.photoReference && (
-        <img src={edt.photoReference} alt="RÃ©fÃ©rence emploi du temps" style={{ width: "100%", borderRadius: 10, marginBottom: 16, border: `1px solid ${LINE}` }} />
+        <img src={edt.photoReference} alt="Référence emploi du temps" style={{ width: "100%", borderRadius: 10, marginBottom: 16, border: `1px solid ${LINE}` }} />
       )}
 
       {JOURS.map((j) => {
@@ -3538,7 +3544,7 @@ function EmploiDuTempsScreen({ classes, edt, setEdt }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: PRIMARY, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>{j.label}</div>
             {creneaux.map((c) => (
               <div key={c.id} onClick={() => setCreneauEnEdition(c)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", border: `1px solid ${LINE}`, borderRadius: 10, marginBottom: 6, background: CARD, cursor: "pointer" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: INK, minWidth: 78 }}>{c.heureDebut}â€“{c.heureFin}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: INK, minWidth: 78 }}>{c.heureDebut}–{c.heureFin}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -3563,20 +3569,20 @@ function EmploiDuTempsScreen({ classes, edt, setEdt }) {
         );
       })}
       {edt.creneaux.length === 0 && (
-        <div style={{ fontSize: 12.5, color: "var(--muted-soft)", textAlign: "center", padding: "16px 0" }}>Aucun crÃ©neau renseignÃ© pour le moment.</div>
+        <div style={{ fontSize: 12.5, color: "var(--muted-soft)", textAlign: "center", padding: "16px 0" }}>Aucun créneau renseigné pour le moment.</div>
       )}
 
       {(formOuvert || creneauEnEdition) && (
         <FormModal
-          title={creneauEnEdition ? "Modifier le crÃ©neau" : "Ajouter un crÃ©neau"}
+          title={creneauEnEdition ? "Modifier le créneau" : "Ajouter un créneau"}
           fields={[
             { key: "jour", label: "Jour", type: "select", options: JOURS.map((j) => ({ value: j.key, label: j.label })), required: true, default: creneauEnEdition?.jour },
-            { key: "heureDebut", label: "Heure de dÃ©but", placeholder: "ex : 08:00", required: true, default: creneauEnEdition?.heureDebut },
+            { key: "heureDebut", label: "Heure de début", placeholder: "ex : 08:00", required: true, default: creneauEnEdition?.heureDebut },
             { key: "heureFin", label: "Heure de fin", placeholder: "ex : 09:00", required: true, default: creneauEnEdition?.heureFin },
-            { key: "titre", label: "Nom du crÃ©neau (utilisÃ© seulement si aucune classe n'est choisie)", placeholder: "ex : RÃ©union, RDV â€” sinon laisse vide", default: creneauEnEdition?.titre },
+            { key: "titre", label: "Nom du créneau (utilisé seulement si aucune classe n'est choisie)", placeholder: "ex : Réunion, RDV — sinon laisse vide", default: creneauEnEdition?.titre },
             { key: "classeId", label: "Classe / Groupe classe (optionnel)", type: "select", options: classes.map((c) => ({ value: c.id, label: c.nom })), default: creneauEnEdition?.classeId },
-            { key: "activite", label: "ActivitÃ©", placeholder: "reprend l'activitÃ© du cycle en cours si vide", default: creneauEnEdition?.activite },
-            { key: "semaine", label: "Alternance (si ce crÃ©neau change une semaine sur deux)", type: "select", options: [{ value: "A", label: "Semaine A" }, { value: "B", label: "Semaine B" }], default: creneauEnEdition?.semaine || "" },
+            { key: "activite", label: "Activité", placeholder: "reprend l'activité du cycle en cours si vide", default: creneauEnEdition?.activite },
+            { key: "semaine", label: "Alternance (si ce créneau change une semaine sur deux)", type: "select", options: [{ value: "A", label: "Semaine A" }, { value: "B", label: "Semaine B" }], default: creneauEnEdition?.semaine || "" },
           ]}
           onClose={() => { setFormOuvert(false); setCreneauEnEdition(null); }}
           onSubmit={creneauEnEdition ? modifierCreneau : creerCreneau}
@@ -3610,7 +3616,7 @@ function EvaluationListScreen({ classes, evaluations, onOpenEvaluation, onCreerE
 
       {evaluations.length === 0 && (
         <div style={{ fontSize: 12.5, color: "var(--muted-soft)", textAlign: "center", padding: "16px 0" }}>
-          Aucune Ã©valuation crÃ©Ã©e pour le moment.
+          Aucune évaluation créée pour le moment.
         </div>
       )}
       {evaluations.map((ev) => (
@@ -3619,11 +3625,11 @@ function EvaluationListScreen({ classes, evaluations, onOpenEvaluation, onCreerE
             <Table size={18} color={PRIMARY} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ev.titre}</div>
-              <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>{ev.classeNom} Â· modifiÃ©e le {new Date(ev.dateModif).toLocaleDateString("fr-FR")}</div>
+              <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>{ev.classeNom} · modifiée le {new Date(ev.dateModif).toLocaleDateString("fr-FR")}</div>
             </div>
           </div>
           <button
-            onClick={() => { if (confirm(`Supprimer dÃ©finitivement Â« ${ev.titre} Â» ?`)) onSupprimerEvaluation(ev.id); }}
+            onClick={() => { if (confirm(`Supprimer définitivement « ${ev.titre} » ?`)) onSupprimerEvaluation(ev.id); }}
             style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer", padding: 4, flexShrink: 0 }}
           >
             <Trash2 size={16} />
@@ -3634,19 +3640,19 @@ function EvaluationListScreen({ classes, evaluations, onOpenEvaluation, onCreerE
         <FormModal
           title="Nouveau tableau"
           fields={[
-            { key: "titre", label: "Titre du tableau", placeholder: "ex : Ã‰val. finale badminton", required: true },
+            { key: "titre", label: "Titre du tableau", placeholder: "ex : Éval. finale badminton", required: true },
             { key: "classeId", label: "Classe / Groupe classe", type: "select", options: classes.map((c) => ({ value: c.id, label: c.nom })), required: true },
           ]}
           onClose={() => setFormOuvert(false)}
           onSubmit={creer}
-          submitLabel="CrÃ©er le tableau"
+          submitLabel="Créer le tableau"
         />
       )}
     </div>
   );
 }
 
-// ---------- Ã‰cran : Ã©dition d'un tableau d'Ã©valuation ----------
+// ---------- Écran : édition d'un tableau d'évaluation ----------
 function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, setBiblio, onBack }) {
   const [config, setConfig] = useState(true);
   const classe = classes.find((c) => c.id === evaluation.classeId);
@@ -3740,7 +3746,7 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
       evalId: evaluation.id,
     };
     setBiblio((b) => ajouterDocDansDossierAuto(b, [classe.nom], doc));
-    setConfirmationDoc(`AjoutÃ© dans Documents â†’ ${classe.nom}.`);
+    setConfirmationDoc(`Ajouté dans Documents → ${classe.nom}.`);
   };
 
   return (
@@ -3752,7 +3758,7 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
           onChange={(e) => maj({ titre: e.target.value })}
           style={{ flex: 1, fontFamily: "'Oswald', sans-serif", fontSize: 18, color: INK, border: "none", background: "none", padding: 0 }}
         />
-        <button onClick={() => setConfig((c) => !c)} title="ParamÃ¨tres" style={{ border: `1px solid ${LINE}`, background: CARD, borderRadius: 9, padding: "7px 9px", cursor: "pointer", display: "flex" }}>
+        <button onClick={() => setConfig((c) => !c)} title="Paramètres" style={{ border: `1px solid ${LINE}`, background: CARD, borderRadius: 9, padding: "7px 9px", cursor: "pointer", display: "flex" }}>
           <Sigma size={15} color={PRIMARY} />
         </button>
       </div>
@@ -3762,14 +3768,14 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
       {config && (
         <div style={{ background: CARD, border: `1px solid ${LINE}`, borderRadius: 12, padding: 12, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ fontSize: 12, color: "var(--muted-soft)" }}>Lignes par Ã©lÃ¨ve</div>
+            <div style={{ fontSize: 12, color: "var(--muted-soft)" }}>Lignes par élève</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 onClick={() => changerLignesParEleve(evaluation.lignesParEleve - 1)}
                 disabled={evaluation.lignesParEleve <= 1}
                 style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${LINE}`, background: CARD, color: evaluation.lignesParEleve <= 1 ? "var(--faint)" : PRIMARY, fontWeight: 700, fontSize: 16, cursor: evaluation.lignesParEleve <= 1 ? "default" : "pointer" }}
               >
-                âˆ’
+                −
               </button>
               <div style={{ width: 28, textAlign: "center", fontWeight: 700, fontSize: 14, color: INK }}>{evaluation.lignesParEleve}</div>
               <button
@@ -3806,13 +3812,13 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
                       onClick={() => changerPortee(col.id, "ligne")}
                       style={{ flex: 1, padding: "6px 4px", borderRadius: 7, border: `1.5px solid ${(col.formule?.portee || "ligne") === "ligne" ? PRIMARY : LINE}`, background: (col.formule?.portee || "ligne") === "ligne" ? PRIMARY_SOFT : CARD, color: (col.formule?.portee || "ligne") === "ligne" ? PRIMARY : "var(--muted-soft)", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
                     >
-                      Entre colonnes (mÃªme ligne)
+                      Entre colonnes (même ligne)
                     </button>
                     <button
                       onClick={() => changerPortee(col.id, "eleve")}
                       style={{ flex: 1, padding: "6px 4px", borderRadius: 7, border: `1.5px solid ${col.formule?.portee === "eleve" ? PRIMARY : LINE}`, background: col.formule?.portee === "eleve" ? PRIMARY_SOFT : CARD, color: col.formule?.portee === "eleve" ? PRIMARY : "var(--muted-soft)", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
                     >
-                      Entre lignes de l'Ã©lÃ¨ve
+                      Entre lignes de l'élève
                     </button>
                   </div>
 
@@ -3841,12 +3847,12 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
                         onChange={(e) => changerFormule(col.id, { colonneSource: e.target.value })}
                         style={{ width: "100%", padding: 7, borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, marginBottom: 8, background: CARD, color: INK }}
                       >
-                        <option value="">â€” choisir â€”</option>
+                        <option value="">— choisir —</option>
                         {evaluation.colonnes.filter((c) => c.id !== col.id && !(c.type === "formule" && c.formule?.portee === "eleve")).map((c) => (
                           <option key={c.id} value={c.id}>{c.titre}</option>
                         ))}
                       </select>
-                      <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>Lignes de l'Ã©lÃ¨ve incluses dans le calcul :</div>
+                      <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>Lignes de l'élève incluses dans le calcul :</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {Array.from({ length: evaluation.lignesParEleve }).map((_, l) => {
                           const inclus = !col.formule?.lignesInclus || col.formule.lignesInclus.includes(l);
@@ -3879,7 +3885,7 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
                     </div>
                   ) : (
                     <div>
-                      <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>Colonnes utilisÃ©es :</div>
+                      <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4 }}>Colonnes utilisées :</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {evaluation.colonnes.filter((c) => c.id !== col.id && !(c.type === "formule" && c.formule?.portee === "eleve")).map((c) => {
                           const coche = (col.formule?.operandes || []).includes(c.id);
@@ -3915,27 +3921,27 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
 
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
         <button onClick={enregistrerDansClasseDocs} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: PRIMARY, fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
-          Enregistrer aussi dans Documents â†’ {classe?.nom}
+          Enregistrer aussi dans Documents → {classe?.nom}
         </button>
-        <button onClick={() => { if (confirm("Supprimer dÃ©finitivement cette Ã©valuation ?")) { onDelete(evaluation.id); onBack(); } }} style={{ padding: "9px 14px", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: "var(--st-absent-c)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <button onClick={() => { if (confirm("Supprimer définitivement cette évaluation ?")) { onDelete(evaluation.id); onBack(); } }} style={{ padding: "9px 14px", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: "var(--st-absent-c)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Trash2 size={14} />
         </button>
       </div>
       {confirmationDoc && <div style={{ fontSize: 11.5, color: PRIMARY, marginBottom: 12 }}>{confirmationDoc}</div>}
 
       {!classe ? (
-        <div style={{ fontSize: 13, color: "var(--muted-soft)" }}>La classe associÃ©e Ã  cette Ã©valuation n'existe plus.</div>
+        <div style={{ fontSize: 13, color: "var(--muted-soft)" }}>La classe associée à cette évaluation n'existe plus.</div>
       ) : (
         <div style={{ overflowX: "auto", border: `1px solid ${LINE}`, borderRadius: 12 }}>
           <table style={{ borderCollapse: "collapse", fontSize: 12, minWidth: "100%" }}>
             <thead>
               <tr>
-                <th style={{ position: "sticky", left: 0, background: CARD, textAlign: "left", padding: "8px 10px", borderBottom: `1.5px solid ${LINE}`, borderRight: `1px solid ${LINE}` }}>Ã‰lÃ¨ve</th>
+                <th style={{ position: "sticky", left: 0, background: CARD, textAlign: "left", padding: "8px 10px", borderBottom: `1.5px solid ${LINE}`, borderRight: `1px solid ${LINE}` }}>Élève</th>
                 {evaluation.colonnes.map((col) => (
                   <th key={col.id} style={{ padding: "8px 8px", borderBottom: `1.5px solid ${LINE}`, whiteSpace: "nowrap", fontWeight: 600, color: "var(--muted)" }}>
                     {col.titre}
-                    {col.type === "formule" && col.formule?.portee === "eleve" && <span style={{ color: PRIMARY }} title="Formule entre lignes de l'Ã©lÃ¨ve"> Î£Ã©lÃ¨ve</span>}
-                    {col.type === "formule" && col.formule?.portee !== "eleve" && <span style={{ color: PRIMARY }} title="Formule entre colonnes"> âˆ‘</span>}
+                    {col.type === "formule" && col.formule?.portee === "eleve" && <span style={{ color: PRIMARY }} title="Formule entre lignes de l'élève"> Σélève</span>}
+                    {col.type === "formule" && col.formule?.portee !== "eleve" && <span style={{ color: PRIMARY }} title="Formule entre colonnes"> ∑</span>}
                   </th>
                 ))}
               </tr>
@@ -4002,8 +4008,8 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
                           onChange={(e) => deplacerLigneLibre(ligne.id, e.target.value)}
                           style={{ width: 116, padding: 4, borderRadius: 6, border: `1px solid ${LINE}`, fontSize: 10, background: CARD, color: "var(--muted-soft)" }}
                         >
-                          <option value="DEBUT">â–¸ Au dÃ©but</option>
-                          {eleves.map((e) => <option key={e.id} value={e.id}>â–¸ AprÃ¨s {e.prenom} {e.nom}</option>)}
+                          <option value="DEBUT">▸ Au début</option>
+                          {eleves.map((e) => <option key={e.id} value={e.id}>▸ Après {e.prenom} {e.nom}</option>)}
                         </select>
                       </div>
                     </td>
@@ -4046,10 +4052,10 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
                               <div>{valeur}</div>
                               <button
                                 onClick={() => setSelectionElevesCible({ ligneId: ligne.id, colId: col.id })}
-                                title="Choisir les Ã©lÃ¨ves et leurs coefficients pour ce calcul"
+                                title="Choisir les élèves et leurs coefficients pour ce calcul"
                                 style={{ border: "none", background: "none", color: PRIMARY, cursor: "pointer", fontSize: 9.5, textDecoration: "underline", padding: 0, marginTop: 2 }}
                               >
-                                {elevesPourCellule.length}/{eleves.length} Ã©lÃ¨ves{cell.operation === "moyenne_ponderee" ? " Â· coef." : ""}
+                                {elevesPourCellule.length}/{eleves.length} élèves{cell.operation === "moyenne_ponderee" ? " · coef." : ""}
                               </button>
                             </div>
                           )}
@@ -4066,7 +4072,7 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
 
       {classe && (
         <button onClick={ajouterLigneLibre} style={{ width: "100%", marginTop: 10, padding: "9px 0", borderRadius: 9, border: `1.5px dashed ${ACCENT}`, background: "none", color: ACCENT, fontWeight: 700, fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <Plus size={13} /> Ajouter une ligne (hors Ã©lÃ¨ves â€” ex : moyenne totale)
+          <Plus size={13} /> Ajouter une ligne (hors élèves — ex : moyenne totale)
         </button>
       )}
 
@@ -4075,7 +4081,7 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
         const cell = ligne?.cellules[selectionElevesCible.colId];
         return (
           <SelectionModal
-            titre="Ã‰lÃ¨ves inclus dans ce calcul"
+            titre="Élèves inclus dans ce calcul"
             items={eleves.map((e) => ({ id: e.id, label: `${e.prenom} ${e.nom}` }))}
             selectionnes={cell?.elevesInclus}
             avecPoids={cell?.operation === "moyenne_ponderee"}
@@ -4142,7 +4148,7 @@ function RecapDispensesScreen({ classes }) {
   if (structure.length === 0) {
     return (
       <div style={{ padding: 30, textAlign: "center", color: "var(--muted-soft)" }}>
-        Aucune dispense enregistrÃ©e pour le moment.
+        Aucune dispense enregistrée pour le moment.
       </div>
     );
   }
@@ -4151,10 +4157,10 @@ function RecapDispensesScreen({ classes }) {
     <div style={{ padding: 16, paddingBottom: 80 }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <button onClick={() => selectionnerCles(toutesLesCles, true)} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: PRIMARY, fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>
-          Tout sÃ©lectionner
+          Tout sélectionner
         </button>
         <button onClick={() => selectionnerCles(toutesLesCles, false)} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: INK, fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>
-          Tout dÃ©sÃ©lectionner
+          Tout désélectionner
         </button>
       </div>
 
@@ -4165,7 +4171,7 @@ function RecapDispensesScreen({ classes }) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 15, color: INK }}>{g.classe.nom}</div>
               <button onClick={() => selectionnerCles(clesClasse, !clesClasse.every((k) => selection[k]))} style={{ border: "none", background: "none", color: PRIMARY, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
-                SÃ©lectionner la classe
+                Sélectionner la classe
               </button>
             </div>
             {g.eleves.map(({ eleve, dispenses }) => {
@@ -4175,7 +4181,7 @@ function RecapDispensesScreen({ classes }) {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 700, color: INK }}>{eleve.prenom} {eleve.nom}</div>
                     <button onClick={() => selectionnerCles(clesEleve, !clesEleve.every((k) => selection[k]))} style={{ border: "none", background: "none", color: PRIMARY, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
-                      SÃ©lectionner
+                      Sélectionner
                     </button>
                   </div>
                   {dispenses.map((d) => (
@@ -4197,7 +4203,7 @@ function RecapDispensesScreen({ classes }) {
           disabled={nbSelection === 0}
           style={{ width: "100%", padding: "13px 0", borderRadius: 12, border: "none", background: nbSelection ? PRIMARY : LINE, color: "#fff", fontWeight: 700, fontSize: 14.5, cursor: nbSelection ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
-          <Printer size={17} /> Imprimer la sÃ©lection ({nbSelection})
+          <Printer size={17} /> Imprimer la sélection ({nbSelection})
         </button>
       </div>
     </div>
@@ -4217,13 +4223,13 @@ function ClasseCycleSheet({ classe }) {
       </select>
 
       {dates.length === 0 ? (
-        <div style={{ fontSize: 13.5, color: "var(--muted-soft)", textAlign: "center", padding: "20px 0" }}>Aucune sÃ©ance enregistrÃ©e pour ce cycle.</div>
+        <div style={{ fontSize: 13.5, color: "var(--muted-soft)", textAlign: "center", padding: "20px 0" }}>Aucune séance enregistrée pour ce cycle.</div>
       ) : (
         <div style={{ overflowX: "auto", border: `1px solid ${LINE}`, borderRadius: 12 }}>
           <table style={{ borderCollapse: "collapse", fontSize: 12.5, minWidth: "100%" }}>
             <thead>
               <tr>
-                <th style={{ position: "sticky", left: 0, background: CARD, textAlign: "left", padding: "8px 10px", borderBottom: `1.5px solid ${LINE}`, borderRight: `1px solid ${LINE}` }}>Ã‰lÃ¨ve</th>
+                <th style={{ position: "sticky", left: 0, background: CARD, textAlign: "left", padding: "8px 10px", borderBottom: `1.5px solid ${LINE}`, borderRight: `1px solid ${LINE}` }}>Élève</th>
                 {dates.map((s) => (
                   <th key={s.id} style={{ padding: "8px 8px", borderBottom: `1.5px solid ${LINE}`, whiteSpace: "nowrap", fontWeight: 600, color: "var(--muted)" }}>
                     {new Date(s.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
@@ -4246,13 +4252,13 @@ function ClasseCycleSheet({ classe }) {
                     const dispBg = dispense ? (dispenseAvecPhoto ? "var(--st-dispense-bg)" : "var(--st-absent-bg)") : "transparent";
                     const dispColor = dispenseAvecPhoto ? "var(--st-dispense-c)" : "var(--st-absent-c)";
                     return (
-                      <td key={s.id} style={{ padding: "6px 8px", borderBottom: `1px solid ${LINE}`, textAlign: "center", background: dispBg }} title={dispense ? (dispenseAvecPhoto ? "Ã‰lÃ¨ve dispensÃ© â€” justificatif photo fourni" : "Ã‰lÃ¨ve dispensÃ© â€” justificatif photo manquant") : undefined}>
+                      <td key={s.id} style={{ padding: "6px 8px", borderBottom: `1px solid ${LINE}`, textAlign: "center", background: dispBg }} title={dispense ? (dispenseAvecPhoto ? "Élève dispensé — justificatif photo fourni" : "Élève dispensé — justificatif photo manquant") : undefined}>
                         {info ? (
                           <span style={{ display: "inline-block", minWidth: 22, padding: "2px 6px", borderRadius: 6, background: info.bg, color: info.color, fontWeight: 700, fontSize: 11 }}>
                             {info.short}
                           </span>
                         ) : (
-                          <span style={{ color: dispense ? dispColor : "var(--faint)" }}>{dispense ? "disp." : "â€”"}</span>
+                          <span style={{ color: dispense ? dispColor : "var(--faint)" }}>{dispense ? "disp." : "—"}</span>
                         )}
                       </td>
                     );
@@ -4264,7 +4270,7 @@ function ClasseCycleSheet({ classe }) {
         </div>
       )}
       <div style={{ marginTop: 12, fontSize: 11.5, color: "var(--muted-soft)", display: "flex", flexWrap: "wrap", gap: 12 }}>
-        <span>Cette fiche se met Ã  jour et se conserve automatiquement Ã  chaque appel enregistrÃ©.</span>
+        <span>Cette fiche se met à jour et se conserve automatiquement à chaque appel enregistré.</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
           <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--st-dispense-bg)", border: `1px solid var(--st-dispense-bd)`, display: "inline-block" }} /> dispense avec photo
         </span>
@@ -4276,11 +4282,11 @@ function ClasseCycleSheet({ classe }) {
   );
 }
 
-// ---------- Ã‰cran de verrouillage PIN ----------
+// ---------- Écran de verrouillage PIN ----------
 function LockScreen({ onUnlock, lockPhoto, onChangePhoto, theme, onToggleTheme }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
-  const PIN_ATTENDU = "1234"; // dÃ©monstration â€” configurable dans la vraie version
+  const PIN_ATTENDU = "1234"; // démonstration — configurable dans la vraie version
 
   const digit = (d) => {
     if (pin.length >= 4) return;
@@ -4312,14 +4318,14 @@ function LockScreen({ onUnlock, lockPhoto, onChangePhoto, theme, onToggleTheme }
       )}
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(10,15,12,0.35), rgba(10,15,12,0.62))" }} />
 
-      <button onClick={onToggleTheme} title="Changer de luminositÃ©" style={{ position: "absolute", top: 18, right: 18, ...glass, borderRadius: 9, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
+      <button onClick={onToggleTheme} title="Changer de luminosité" style={{ position: "absolute", top: 18, right: 18, ...glass, borderRadius: 9, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
         {theme === "sombre" ? <Sun size={16} /> : <Moon size={16} />}
       </button>
 
       <div style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, letterSpacing: 1, marginBottom: 2, textShadow: "0 1px 8px rgba(0,0,0,0.4)" }}>EPS PRO</div>
         <div style={{ fontSize: 10.5, fontStyle: "italic", opacity: 0.75, marginBottom: 20 }}>by C. Guilhem</div>
-        <div style={{ fontSize: 12.5, opacity: 0.85, marginBottom: 26 }}>Code d'accÃ¨s</div>
+        <div style={{ fontSize: 12.5, opacity: 0.85, marginBottom: 26 }}>Code d'accès</div>
         <div style={{ display: "flex", gap: 12, marginBottom: 30 }}>
           {[0, 1, 2, 3].map((i) => (
             <div key={i} style={{ width: 14, height: 14, borderRadius: "50%", background: i < pin.length ? "#fff" : "rgba(255,255,255,0.28)", border: error ? "1.5px solid #FF9466" : "none" }} />
@@ -4327,10 +4333,10 @@ function LockScreen({ onUnlock, lockPhoto, onChangePhoto, theme, onToggleTheme }
         </div>
         {error && <div style={{ fontSize: 12, color: "#FFB199", marginBottom: 14, marginTop: -14 }}>Code incorrect</div>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 14 }}>
-          {["1","2","3","4","5","6","7","8","9","","0","âŒ«"].map((d, i) => d === "" ? <div key={i} /> : (
+          {["1","2","3","4","5","6","7","8","9","","0","⌫"].map((d, i) => d === "" ? <div key={i} /> : (
             <button
               key={i}
-              onClick={() => d === "âŒ«" ? setPin(pin.slice(0, -1)) : digit(d)}
+              onClick={() => d === "⌫" ? setPin(pin.slice(0, -1)) : digit(d)}
               style={{ width: 64, height: 64, borderRadius: "50%", ...glass, color: "#fff", fontSize: 20, cursor: "pointer" }}
             >
               {d}
@@ -4352,7 +4358,7 @@ export default function EpsPro() {
   const [locked, setLocked] = useState(true);
   const [classes, setClasses] = useState(seedClasses());
   const [tab, setTab] = useState("accueil");
-  const [nav, setNav] = useState([]); // pile d'Ã©crans secondaires
+  const [nav, setNav] = useState([]); // pile d'écrans secondaires
   const [annotCible, setAnnotCible] = useState(null); // { classeId, eleveId, activite }
   const [theme, setTheme] = useState("clair");
   const [lockPhoto, setLockPhoto] = useState(null);
@@ -4420,16 +4426,16 @@ export default function EpsPro() {
   } else if (current?.screen === "fiche") {
     const c = classes.find((x) => x.id === current.params.classeId);
     const e = c.eleves.find((x) => x.id === current.params.eleveId);
-    title = "Fiche Ã©lÃ¨ve";
+    title = "Fiche élève";
     body = <FicheEleve classe={c} eleve={e} updateEleve={(patch) => updateEleveIn(c.id, e.id, patch)} updateClasse={updateClasse} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} biblio={biblio} setBiblio={setBiblio} />;
   } else if (current?.screen === "ficheCycle") {
     const c = classes.find((x) => x.id === current.params.classeId);
-    title = `Fiche gÃ©nÃ©rale â€” ${c.nom}`;
+    title = `Fiche générale — ${c.nom}`;
     body = <ClasseCycleSheet classe={c} />;
   } else if (current?.screen === "chronoFiche") {
     const c = classes.find((x) => x.id === current.params.classeId);
     const f = (c.chronos || []).find((x) => x.id === current.params.chronoId);
-    title = "Fiche chronomÃ¨tre";
+    title = "Fiche chronomètre";
     body = <ChronoFicheScreen classe={c} fiche={f} updateClasse={updateClasse} onDeleted={pop} />;
   } else if (current?.screen === "blocNoteFiche") {
     const c = classes.find((x) => x.id === current.params.classeId);
@@ -4437,27 +4443,27 @@ export default function EpsPro() {
     title = "Bloc-note";
     body = <BlocNoteFicheScreen classe={c} note={n} updateClasse={updateClasse} onDeleted={pop} />;
   } else if (current?.screen === "recapDispenses") {
-    title = "RÃ©capitulatif des dispenses";
+    title = "Récapitulatif des dispenses";
     body = <RecapDispensesScreen classes={classes} />;
   } else if (current?.screen === "evaluations") {
-    title = "Ã‰diteur de tableau";
+    title = "Éditeur de tableau";
     body = <EvaluationListScreen classes={classes} evaluations={evaluations} onOpenEvaluation={(id) => push("evaluationEditor", { id })} onCreerEvaluation={ajouterEvaluation} onSupprimerEvaluation={supprimerEvaluation} />;
   } else if (current?.screen === "evaluationEditor") {
     const ev = evaluations.find((x) => x.id === current.params.id);
-    title = "Ã‰diteur de tableau";
+    title = "Éditeur de tableau";
     body = ev ? (
       <EvaluationEditor evaluation={ev} classes={classes} onUpdate={updateEvaluation} onDelete={supprimerEvaluation} biblio={biblio} setBiblio={setBiblio} onBack={pop} />
     ) : (
-      <div style={{ padding: 30, textAlign: "center", color: "var(--muted-soft)" }}>Cette Ã©valuation n'existe plus.</div>
+      <div style={{ padding: 30, textAlign: "center", color: "var(--muted-soft)" }}>Cette évaluation n'existe plus.</div>
     );
   } else if (current?.screen === "edt") {
     title = "Emploi du temps";
     body = <EmploiDuTempsScreen classes={classes} edt={edt} setEdt={setEdt} />;
   } else if (current?.screen === "assistantRentree") {
-    title = "Assistant de rentrÃ©e";
+    title = "Assistant de rentrée";
     body = <AssistantRentreeScreen etablissement={etablissement} setEtablissement={setEtablissement} edt={edt} setEdt={setEdt} classes={classes} />;
   } else if (current?.screen === "outil") {
-    title = current.params.id === "minuteur" ? "Minuteur" : current.params.id === "chrono" ? "ChronomÃ¨tre" : "Bloc-note";
+    title = current.params.id === "minuteur" ? "Minuteur" : current.params.id === "chrono" ? "Chronomètre" : "Bloc-note";
     body = current.params.id === "minuteur" ? <MinuteurScreen />
       : current.params.id === "chrono" ? <ChronoScreen classes={classes} updateClasse={updateClasse} />
       : <BlocNoteScreen classes={classes} updateClasse={updateClasse} />;
