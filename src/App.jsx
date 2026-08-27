@@ -10,6 +10,52 @@ import {
 } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+// ---------- Stockage local persistant (IndexedDB) ----------
+const DB_NOM = "eps-pro-db";
+const DB_MAGASIN = "kv";
+
+function ouvrirDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NOM, 1);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains(DB_MAGASIN)) {
+        req.result.createObjectStore(DB_MAGASIN);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbLire(cle) {
+  try {
+    const db = await ouvrirDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_MAGASIN, "readonly");
+      const req = tx.objectStore(DB_MAGASIN).get(cle);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) {
+    return undefined;
+  }
+}
+
+async function idbEcrire(cle, valeur) {
+  try {
+    const db = await ouvrirDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_MAGASIN, "readwrite");
+      tx.objectStore(DB_MAGASIN).put(valeur, cle);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) {
+    // Stockage indisponible (mode privé strict, etc.) : on continue sans bloquer l'appli.
+  }
+}
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const nowISO = () => new Date().toISOString();
 const fmtDateHeure = (iso) => {
@@ -4377,6 +4423,36 @@ export default function EpsPro() {
   const [etablissement, setEtablissement] = useState({ nom: "", anneeScolaire: "" });
   const toggleTheme = () => setTheme((t) => (t === "clair" ? "sombre" : "clair"));
 
+  const [pret, setPret] = useState(false);
+
+  React.useEffect(() => {
+    let annule = false;
+    (async () => {
+      const [c, b, ev, e, et, lp, th] = await Promise.all([
+        idbLire("classes"), idbLire("biblio"), idbLire("evaluations"),
+        idbLire("edt"), idbLire("etablissement"), idbLire("lockPhoto"), idbLire("theme"),
+      ]);
+      if (annule) return;
+      if (c) setClasses(c);
+      if (b) setBiblio(b);
+      if (ev) setEvaluations(ev);
+      if (e) setEdt(e);
+      if (et) setEtablissement(et);
+      if (lp) setLockPhoto(lp);
+      if (th) setTheme(th);
+      setPret(true);
+    })();
+    return () => { annule = true; };
+  }, []);
+
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("classes", classes), 400); return () => clearTimeout(t); }, [classes, pret]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("biblio", biblio), 400); return () => clearTimeout(t); }, [biblio, pret]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("evaluations", evaluations), 400); return () => clearTimeout(t); }, [evaluations, pret]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("edt", edt), 400); return () => clearTimeout(t); }, [edt, pret]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("etablissement", etablissement), 400); return () => clearTimeout(t); }, [etablissement, pret]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("lockPhoto", lockPhoto), 400); return () => clearTimeout(t); }, [lockPhoto, pret]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("theme", theme), 400); return () => clearTimeout(t); }, [theme, pret]);
+
   const push = (screen, params = {}) => setNav([...nav, { screen, params }]);
   const pop = () => setNav(nav.slice(0, -1));
   const current = nav[nav.length - 1];
@@ -4511,7 +4587,12 @@ export default function EpsPro() {
         .eps-side-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: none; background: none; cursor: pointer; text-align: left; font-size: 13.5px; font-weight: 600; }
       `}</style>
 
-      {locked ? (
+      {!pret ? (
+        <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, background: PRIMARY, color: "#fff" }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 22, letterSpacing: 1 }}>EPS PRO</div>
+          <div style={{ fontSize: 12, opacity: 0.8 }}>Chargement de tes données…</div>
+        </div>
+      ) : locked ? (
         <LockScreen onUnlock={() => setLocked(false)} lockPhoto={lockPhoto} onChangePhoto={setLockPhoto} theme={theme} onToggleTheme={toggleTheme} />
       ) : (
         <div className="eps-shell" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
