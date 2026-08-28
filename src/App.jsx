@@ -8,7 +8,7 @@ import {
   LayoutGrid, Home, RefreshCw, Archive, StickyNote, ThumbsUp, ThumbsDown, Table2, Sun, Moon, ImagePlus,
   Wrench, Timer, Play, Pause, RotateCcw, Flag, Phone, Upload, GraduationCap, Star, Pencil,
   FileText, Image as ImageIcon, Video, Paperclip, FolderPlus, Download, RotateCw, RotateCcw as RotateCcwIcon, Folder,
-  Table, Sigma
+  Table, Sigma, ExternalLink
 } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -177,8 +177,8 @@ const THEME_CSS = `
     --tile-minuteur: linear-gradient(135deg, #16C79A, #2E6FD1);
     --tile-chrono: linear-gradient(135deg, #8A4DFF, #FF4FA3);
     --tile-blocnote: linear-gradient(135deg, #16C79A, #FFC145);
+    --tile-liens: linear-gradient(135deg, #2E6FD1, #16C79A);
   }
-  [data-theme="sombre"] {
     --paper: #101713;
     --card: #1A2420;
     --ink: #EEF3EC;
@@ -202,6 +202,7 @@ const THEME_CSS = `
     --tile-minuteur: linear-gradient(135deg, #3EE6BD, #7FB0FF);
     --tile-chrono: linear-gradient(135deg, #A97CFF, #FF7CC0);
     --tile-blocnote: linear-gradient(135deg, #3EE6BD, #FFD873);
+    --tile-liens: linear-gradient(135deg, #7FB0FF, #3EE6BD);
   }
 `;
 
@@ -451,6 +452,71 @@ function QuickTile({ Icon, label, onClick, tone }) {
       <Icon size={22} />
       <span style={{ fontWeight: 700, fontSize: 14.5 }}>{label}</span>
     </button>
+  );
+}
+
+// ---------- Écran : Gestion de classe (regroupe Classe/Groupe, Appel, Trombi) ----------
+function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio }) {
+  const sousOnglets = [
+    { key: "classes", label: "Classe/Groupe" },
+    { key: "appel", label: "Appel" },
+    { key: "trombi", label: "Trombi" },
+  ];
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 6, padding: "12px 16px 0" }}>
+        {sousOnglets.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setSousOnglet(s.key)}
+            style={{
+              flex: 1, padding: "8px 6px", borderRadius: 9, border: `1px solid ${sousOnglet === s.key ? PRIMARY : LINE}`,
+              background: sousOnglet === s.key ? PRIMARY_SOFT : CARD, color: sousOnglet === s.key ? PRIMARY : "var(--muted-soft)",
+              fontWeight: 700, fontSize: 12, cursor: "pointer",
+            }}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+      {sousOnglet === "classes" && <ClassesScreen classes={classes} setClasses={setClasses} onOpenClass={onOpenClass} />}
+      {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} />}
+      {sousOnglet === "trombi" && <TrombiScreen classes={classes} updateEleve={updateEleve} updateClasse={updateClasse} onOpenEleve={onOpenEleve} />}
+    </div>
+  );
+}
+
+// ---------- Écran : Liens externes (autres applis de C. Guilhem) ----------
+function LiensExternesScreen() {
+  const liens = [
+    { label: "Suivi AS", description: "Fiches élèves de l'Association Sportive", url: "https://suivi-as.onrender.com" },
+    { label: "Muscu Pro", description: "Suivi musculation par séance", url: "https://muscu-pro-app.vercel.app" },
+    { label: "VMA Pro", description: "Calcul VMA, allures et charge", url: "https://vma-pro.vercel.app" },
+  ];
+  return (
+    <div style={{ padding: 18 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 12 }}>
+        Mes autres applications
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {liens.map((l) => (
+          <a
+            key={l.url} href={l.url} target="_blank" rel="noopener noreferrer"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+              background: "var(--tile-liens)", color: "#fff", borderRadius: 14, padding: "16px 16px",
+              textDecoration: "none", boxShadow: "0 4px 14px rgba(0,0,0,0.16)",
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{l.label}</div>
+              <div style={{ fontSize: 12, opacity: 0.9, marginTop: 2 }}>{l.description}</div>
+            </div>
+            <ExternalLink size={20} />
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -4482,6 +4548,7 @@ export default function EpsPro() {
   const [locked, setLocked] = useState(true);
   const [classes, setClasses] = useState(seedClasses());
   const [tab, setTab] = useState("accueil");
+  const [sousOngletGestion, setSousOngletGestion] = useState("classes");
   const [nav, setNav] = useState([]); // pile d'écrans secondaires
   const [annotCible, setAnnotCible] = useState(null); // { classeId, eleveId, activite }
   const [theme, setTheme] = useState("clair");
@@ -4671,11 +4738,10 @@ export default function EpsPro() {
   } else {
     switch (tab) {
       case "accueil": title = "Accueil"; body = <Accueil classes={classes} edt={edt} setEdt={setEdt} etablissement={etablissement} onOpenEdt={() => push("edt", {})} />; break;
-      case "classes": title = "Classe/Groupe Classe"; body = <ClassesScreen classes={classes} setClasses={setClasses} onOpenClass={(id) => push("classeDetail", { id })} />; break;
-      case "trombi": title = "Trombinoscopes"; body = <TrombiScreen classes={classes} updateEleve={updateEleveIn} updateClasse={updateClasse} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} />; break;
-      case "appel": title = "Appel"; body = <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} />; break;
+      case "gestion": title = "Gestion de classe"; body = <GestionClasseScreen sousOnglet={sousOngletGestion} setSousOnglet={setSousOngletGestion} classes={classes} setClasses={setClasses} updateClasse={updateClasse} updateEleve={updateEleveIn} onOpenClass={(id) => push("classeDetail", { id })} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} />; break;
       case "documents": title = "Documents"; body = <DocumentsScreen biblio={biblio} setBiblio={setBiblio} onSupprimerPhotoDeDispense={supprimerPhotoDeDispense} onOpenRecapDispenses={() => push("recapDispenses", {})} onOpenEvaluations={() => push("evaluations", {})} onOpenEvaluation={(id) => push("evaluationEditor", { id })} />; break;
       case "outils": title = "Outils"; body = <OutilsScreen onOpenOutil={(id) => push("outil", { id })} onOpenEvaluations={() => push("evaluations", {})} onOpenEdt={() => push("edt", {})} onOpenAssistantRentree={() => push("assistantRentree", {})} />; break;
+      case "liens": title = "Liens externes"; body = <LiensExternesScreen />; break;
       default: body = null;
     }
   }
@@ -4684,11 +4750,10 @@ export default function EpsPro() {
 
   const navItems = [
     { key: "accueil", Icon: Home, label: "Accueil" },
-    { key: "classes", Icon: Users, label: "Classe/Groupe" },
-    { key: "appel", Icon: ClipboardCheck, label: "Appel" },
-    { key: "trombi", Icon: LayoutGrid, label: "Trombi" },
+    { key: "gestion", Icon: Users, label: "Classes" },
     { key: "documents", Icon: FolderOpen, label: "Docs" },
     { key: "outils", Icon: Wrench, label: "Outils" },
+    { key: "liens", Icon: ExternalLink, label: "Liens" },
   ];
 
   return (
