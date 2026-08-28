@@ -458,8 +458,8 @@ function QuickTile({ Icon, label, onClick, tone }) {
 // ---------- Écran : Gestion de classe (regroupe Classe/Groupe, Appel, Trombi) ----------
 function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio }) {
   const sousOnglets = [
-    { key: "classes", label: "Classe/Groupe" },
     { key: "appel", label: "Appel" },
+    { key: "classes", label: "Classe/Groupe" },
     { key: "trombi", label: "Trombi" },
   ];
   return (
@@ -4548,7 +4548,7 @@ export default function EpsPro() {
   const [locked, setLocked] = useState(true);
   const [classes, setClasses] = useState(seedClasses());
   const [tab, setTab] = useState("accueil");
-  const [sousOngletGestion, setSousOngletGestion] = useState("classes");
+  const [sousOngletGestion, setSousOngletGestion] = useState("appel");
   const [nav, setNav] = useState([]); // pile d'écrans secondaires
   const [annotCible, setAnnotCible] = useState(null); // { classeId, eleveId, activite }
   const [theme, setTheme] = useState("clair");
