@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
 import * as XLSX from "xlsx";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import {
   Users, Camera, ClipboardCheck, UserCircle2, Plus, Trash2, ChevronLeft,
   Printer, X, Check, HeartPulse, UserX, Shirt, Calendar, FolderOpen,
@@ -53,6 +55,44 @@ async function idbEcrire(cle, valeur) {
     });
   } catch (e) {
     // Stockage indisponible (mode privé strict, etc.) : on continue sans bloquer l'appli.
+  }
+}
+
+// ---------- Synchronisation en ligne (Firebase / Firestore) ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyAh2sS6lbXv1S_70fGqkTQXt8qjS-xl8hc",
+  authDomain: "eps-pro-1460c.firebaseapp.com",
+  projectId: "eps-pro-1460c",
+  storageBucket: "eps-pro-1460c.firebasestorage.app",
+  messagingSenderId: "651231276995",
+  appId: "1:651231276995:web:9a0a4bee757ffe4d6a1776",
+};
+let firestoreDb = null;
+try {
+  const firebaseApp = initializeApp(firebaseConfig);
+  firestoreDb = getFirestore(firebaseApp);
+} catch (e) {
+  firestoreDb = null;
+}
+
+async function cloudLire(codeProf, cle) {
+  if (!firestoreDb || !codeProf) return null;
+  try {
+    const ref = doc(firestoreDb, "profs", codeProf, "data", cle);
+    const snap = await getDoc(ref);
+    return snap.exists() ? snap.data() : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function cloudEcrire(codeProf, cle, valeur, maj) {
+  if (!firestoreDb || !codeProf) return;
+  try {
+    const ref = doc(firestoreDb, "profs", codeProf, "data", cle);
+    await setDoc(ref, { valeur, maj });
+  } catch (e) {
+    // Pas de réseau ou règles Firestore non prêtes : on reste en local, sans bloquer l'appli.
   }
 }
 
@@ -3304,13 +3344,14 @@ function estJourFerie(edt, date) {
 }
 
 // ---------- Écran : Assistant de rentrée ----------
-function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, classes }) {
+function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, classes, codeProf, statutSync, onActiverSync, onDesactiverSync }) {
   const [nomEtab, setNomEtab] = useState(etablissement.nom || "");
   const [anneeTxt, setAnneeTxt] = useState(etablissement.anneeScolaire || "");
   const [formVacancesOuvert, setFormVacancesOuvert] = useState(false);
   const [formFerieOuvert, setFormFerieOuvert] = useState(false);
   const [formNouvelleAnneeOuvert, setFormNouvelleAnneeOuvert] = useState(false);
   const [historiqueOuvert, setHistoriqueOuvert] = useState(null);
+  const [codeSaisi, setCodeSaisi] = useState(codeProf || "");
 
   const sauverEtablissement = () => setEtablissement({ nom: nomEtab, anneeScolaire: anneeTxt });
 
@@ -3349,6 +3390,43 @@ function AssistantRentreeScreen({ etablissement, setEtablissement, edt, setEdt, 
 
   return (
     <div style={{ padding: 16, paddingBottom: 40 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Synchronisation en ligne</div>
+      <div style={{ background: codeProf ? PRIMARY_SOFT : CARD, border: `1px solid ${codeProf ? PRIMARY : LINE}`, borderRadius: 12, padding: 12, marginBottom: 20 }}>
+        {codeProf ? (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 4, background: statutSync === "syncing" ? "var(--st-tenue-c)" : "var(--st-present-c)" }} />
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>
+                {statutSync === "syncing" ? "Synchronisation…" : "Synchronisé"} — code « {codeProf} »
+              </div>
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 10 }}>
+              Tes données se synchronisent automatiquement. Utilise ce même code sur un autre appareil pour les y retrouver.
+            </div>
+            <button onClick={onDesactiverSync} style={{ width: "100%", padding: "8px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: "var(--st-absent-c)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
+              Désactiver la synchronisation (rester en local uniquement)
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 8 }}>
+              Choisis un code personnel (garde-le secret) pour synchroniser tes données entre plusieurs appareils, ou pour les récupérer si tu changes de téléphone.
+            </div>
+            <input
+              value={codeSaisi} onChange={(e) => setCodeSaisi(e.target.value)}
+              placeholder="ex : cguilhem-brassens" style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, marginBottom: 8, background: CARD, color: INK }}
+            />
+            <button
+              onClick={() => codeSaisi.trim() && onActiverSync(codeSaisi.trim())}
+              disabled={!codeSaisi.trim()}
+              style={{ width: "100%", padding: "9px 0", borderRadius: 9, border: "none", background: codeSaisi.trim() ? PRIMARY : LINE, color: "#fff", fontWeight: 700, fontSize: 12.5, cursor: codeSaisi.trim() ? "pointer" : "default" }}
+            >
+              Activer la synchronisation
+            </button>
+          </div>
+        )}
+      </div>
+
       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Établissement</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         <input
@@ -4424,34 +4502,81 @@ export default function EpsPro() {
   const toggleTheme = () => setTheme((t) => (t === "clair" ? "sombre" : "clair"));
 
   const [pret, setPret] = useState(false);
+  const [codeProf, setCodeProf] = useState("");
+  const [statutSync, setStatutSync] = useState("local"); // 'local' | 'synced' | 'syncing'
 
   React.useEffect(() => {
     let annule = false;
     (async () => {
-      const [c, b, ev, e, et, lp, th] = await Promise.all([
-        idbLire("classes"), idbLire("biblio"), idbLire("evaluations"),
-        idbLire("edt"), idbLire("etablissement"), idbLire("lockPhoto"), idbLire("theme"),
-      ]);
+      const code = (await idbLire("codeProf")) || "";
+      const cles = ["classes", "biblio", "evaluations", "edt", "etablissement", "lockPhoto", "theme"];
+      const locaux = await Promise.all(cles.map((c) => idbLire(c)));
+      const distants = code ? await Promise.all(cles.map((c) => cloudLire(code, c))) : cles.map(() => null);
       if (annule) return;
-      if (c) setClasses(c);
-      if (b) setBiblio(b);
-      if (ev) setEvaluations(ev);
-      if (e) setEdt(e);
-      if (et) setEtablissement(et);
-      if (lp) setLockPhoto(lp);
-      if (th) setTheme(th);
+
+      const valeurs = {};
+      cles.forEach((cle, i) => {
+        const local = locaux[i]; // { valeur, maj } | undefined
+        const distant = distants[i]; // { valeur, maj } | null
+        if (distant && (!local || distant.maj > local.maj)) {
+          valeurs[cle] = distant.valeur;
+        } else if (local) {
+          valeurs[cle] = local.valeur;
+        }
+      });
+
+      if (valeurs.classes) setClasses(valeurs.classes);
+      if (valeurs.biblio) setBiblio(valeurs.biblio);
+      if (valeurs.evaluations) setEvaluations(valeurs.evaluations);
+      if (valeurs.edt) setEdt(valeurs.edt);
+      if (valeurs.etablissement) setEtablissement(valeurs.etablissement);
+      if (valeurs.lockPhoto) setLockPhoto(valeurs.lockPhoto);
+      if (valeurs.theme) setTheme(valeurs.theme);
+      setCodeProf(code);
+      setStatutSync(code ? "synced" : "local");
       setPret(true);
     })();
     return () => { annule = true; };
   }, []);
 
-  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("classes", classes), 400); return () => clearTimeout(t); }, [classes, pret]);
-  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("biblio", biblio), 400); return () => clearTimeout(t); }, [biblio, pret]);
-  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("evaluations", evaluations), 400); return () => clearTimeout(t); }, [evaluations, pret]);
-  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("edt", edt), 400); return () => clearTimeout(t); }, [edt, pret]);
-  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("etablissement", etablissement), 400); return () => clearTimeout(t); }, [etablissement, pret]);
-  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("lockPhoto", lockPhoto), 400); return () => clearTimeout(t); }, [lockPhoto, pret]);
-  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => idbEcrire("theme", theme), 400); return () => clearTimeout(t); }, [theme, pret]);
+  const sauvegarder = (cle, valeur) => {
+    const maj = Date.now();
+    idbEcrire(cle, { valeur, maj });
+    if (codeProf) {
+      setStatutSync("syncing");
+      cloudEcrire(codeProf, cle, valeur, maj).then(() => setStatutSync("synced"));
+    }
+  };
+
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => sauvegarder("classes", classes), 400); return () => clearTimeout(t); }, [classes, pret, codeProf]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => sauvegarder("biblio", biblio), 400); return () => clearTimeout(t); }, [biblio, pret, codeProf]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => sauvegarder("evaluations", evaluations), 400); return () => clearTimeout(t); }, [evaluations, pret, codeProf]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => sauvegarder("edt", edt), 400); return () => clearTimeout(t); }, [edt, pret, codeProf]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => sauvegarder("etablissement", etablissement), 400); return () => clearTimeout(t); }, [etablissement, pret, codeProf]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => sauvegarder("lockPhoto", lockPhoto), 400); return () => clearTimeout(t); }, [lockPhoto, pret, codeProf]);
+  React.useEffect(() => { if (!pret) return; const t = setTimeout(() => sauvegarder("theme", theme), 400); return () => clearTimeout(t); }, [theme, pret, codeProf]);
+
+  const activerSynchronisation = async (code) => {
+    idbEcrire("codeProf", code);
+    setCodeProf(code);
+    setStatutSync("syncing");
+    // Au moment d'activer, on pousse immédiatement l'état local actuel vers le cloud
+    // pour initialiser la fiche de ce code (ou la mettre à jour).
+    const maj = Date.now();
+    await Promise.all([
+      cloudEcrire(code, "classes", classes, maj),
+      cloudEcrire(code, "biblio", biblio, maj),
+      cloudEcrire(code, "evaluations", evaluations, maj),
+      cloudEcrire(code, "edt", edt, maj),
+      cloudEcrire(code, "etablissement", etablissement, maj),
+    ]);
+    setStatutSync("synced");
+  };
+  const desactiverSynchronisation = () => {
+    idbEcrire("codeProf", "");
+    setCodeProf("");
+    setStatutSync("local");
+  };
 
   const push = (screen, params = {}) => setNav([...nav, { screen, params }]);
   const pop = () => setNav(nav.slice(0, -1));
@@ -4537,7 +4662,7 @@ export default function EpsPro() {
     body = <EmploiDuTempsScreen classes={classes} edt={edt} setEdt={setEdt} />;
   } else if (current?.screen === "assistantRentree") {
     title = "Assistant de rentrée";
-    body = <AssistantRentreeScreen etablissement={etablissement} setEtablissement={setEtablissement} edt={edt} setEdt={setEdt} classes={classes} />;
+    body = <AssistantRentreeScreen etablissement={etablissement} setEtablissement={setEtablissement} edt={edt} setEdt={setEdt} classes={classes} codeProf={codeProf} statutSync={statutSync} onActiverSync={activerSynchronisation} onDesactiverSync={desactiverSynchronisation} />;
   } else if (current?.screen === "outil") {
     title = current.params.id === "minuteur" ? "Minuteur" : current.params.id === "chrono" ? "Chronomètre" : "Bloc-note";
     body = current.params.id === "minuteur" ? <MinuteurScreen />
