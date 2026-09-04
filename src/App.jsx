@@ -8,14 +8,14 @@ import {
   LayoutGrid, Home, RefreshCw, Archive, StickyNote, ThumbsUp, ThumbsDown, Table2, Sun, Moon, ImagePlus,
   Wrench, Timer, Play, Pause, RotateCcw, Flag, Phone, Upload, GraduationCap, Star, Pencil,
   FileText, Image as ImageIcon, Video, Paperclip, FolderPlus, Download, RotateCw, RotateCcw as RotateCcwIcon, Folder,
-  Table, Sigma, ExternalLink, Lock, Globe, Mail, HardDrive, Link2, Search
+  Table, Sigma, ExternalLink, Lock, Globe, Mail, HardDrive, Link2, Search, Clock
 } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.6.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -1785,6 +1785,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   const cycle = classe?.cycles[classe.cycles.length - 1];
   const [date, setDate] = useState(todayISO());
   const [statuts, setStatuts] = useState({});
+  const [retards, setRetards] = useState({});
   const [saved, setSaved] = useState(false);
   const [detailsOuverts, setDetailsOuverts] = useState(false);
   const [dispenseCible, setDispenseCible] = useState(null); // élève pour lequel on configure une dispense
@@ -1793,6 +1794,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 
   React.useEffect(() => {
     setStatuts(seanceExistante ? { ...seanceExistante.appels } : {});
+    setRetards(seanceExistante ? { ...(seanceExistante.retards || {}) } : {});
     setSaved(false);
   }, [date, classeId]);
 
@@ -1812,6 +1814,16 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 
   const setStatut = (eleveId, statut) => {
     setStatuts((prev) => ({ ...prev, [eleveId]: prev[eleveId] === statut ? undefined : statut }));
+    setSaved(false);
+  };
+
+  const setRetard = (eleveId, minutes) => {
+    setRetards((prev) => {
+      const suivant = { ...prev };
+      if (minutes > 0) suivant[eleveId] = minutes;
+      else delete suivant[eleveId];
+      return suivant;
+    });
     setSaved(false);
   };
 
@@ -1901,8 +1913,8 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
     const dernierCycle = classe.cycles[classe.cycles.length - 1];
     const existeDeja = dernierCycle.seances.some((s) => s.date === date);
     const nouvellesSeances = existeDeja
-      ? dernierCycle.seances.map((s) => s.date === date ? { ...s, appels: statuts } : s)
-      : [...dernierCycle.seances, { id: uid(), date, appels: statuts }];
+      ? dernierCycle.seances.map((s) => s.date === date ? { ...s, appels: statuts, retards } : s)
+      : [...dernierCycle.seances, { id: uid(), date, appels: statuts, retards }];
     const cycles = classe.cycles.map((c, i) => i === classe.cycles.length - 1 ? { ...c, seances: nouvellesSeances } : c);
     updateClasse({ ...classe, cycles });
     setSaved(true);
@@ -1970,6 +1982,27 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
           >
             <StickyNote size={15} />
           </button>
+          <div style={{ position: "relative", width: 34, height: 34, flexShrink: 0 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${retards[e.id] ? "var(--st-tenue-c)" : LINE}`,
+              background: retards[e.id] ? "var(--st-tenue-bg)" : CARD, color: retards[e.id] ? "var(--st-tenue-c)" : "var(--muted-soft)",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none",
+            }}>
+              <Clock size={13} />
+              {retards[e.id] > 0 && <span style={{ fontSize: 8, fontWeight: 700, lineHeight: 1, marginTop: 1 }}>{retards[e.id]}'</span>}
+            </div>
+            <select
+              value={retards[e.id] || 0}
+              onChange={(ev) => setRetard(e.id, Number(ev.target.value))}
+              title="Retard"
+              style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}
+            >
+              <option value={0}>Aucun retard</option>
+              {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
+                <option key={m} value={m}>{m} min</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
     );
@@ -2105,6 +2138,22 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
       let n = 0;
       cy.seances.forEach((s) => { if (s.appels[eleve.id] === "sans_tenue") n++; });
       map[cy.activite] = n;
+    });
+    return map;
+  }, [classe, eleve.id]);
+
+  const retardsParAnnee = useMemo(() => {
+    const map = {};
+    classe.cycles.forEach((cy) => {
+      cy.seances.forEach((s) => {
+        const minutes = (s.retards || {})[eleve.id];
+        if (!minutes) return;
+        const annee = anneeScolaireDe(s.date);
+        const tri = trimestreDe(s.date);
+        if (!map[annee]) map[annee] = { total: 0, T1: 0, T2: 0, T3: 0 };
+        map[annee].total += minutes;
+        map[annee][tri] += minutes;
+      });
     });
     return map;
   }, [classe, eleve.id]);
@@ -2388,6 +2437,22 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
           </div>
         ))}
       </div>
+
+      {Object.keys(retardsParAnnee).length > 0 && (
+        <>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+            <Clock size={12} /> Retards cumulés
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
+            {Object.entries(retardsParAnnee).sort(([a], [b]) => b.localeCompare(a)).map(([annee, r]) => (
+              <div key={annee} style={{ padding: "8px 10px", borderRadius: 9, background: CARD, border: `1px solid ${LINE}`, fontSize: 12 }}>
+                <b>{annee}</b> : {r.total} min au total
+                <span style={{ color: "var(--muted-soft)" }}> · T1 : {r.T1} min · T2 : {r.T2} min · T3 : {r.T3} min</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.5 }}>
@@ -4365,6 +4430,20 @@ function detecterProblemesCycles(cycles) {
 function fmtDateCourt(iso) {
   if (!iso) return "";
   return new Date(iso + "T00:00:00").toLocaleDateString("fr-FR");
+}
+
+// Année scolaire (ex. "2026-2027") et trimestre (T1/T2/T3) approximatifs à partir d'une date ISO — utilisés pour cumuler les retards.
+function anneeScolaireDe(dateISO) {
+  const d = new Date(dateISO + "T00:00:00");
+  const mois = d.getMonth() + 1;
+  const annee = d.getFullYear();
+  return mois >= 8 ? `${annee}-${annee + 1}` : `${annee - 1}-${annee}`;
+}
+function trimestreDe(dateISO) {
+  const mois = new Date(dateISO + "T00:00:00").getMonth() + 1;
+  if ([9, 10, 11, 12].includes(mois)) return "T1";
+  if ([1, 2, 3].includes(mois)) return "T2";
+  return "T3";
 }
 
 // ---------- Écran : Assistant de rentrée ----------
