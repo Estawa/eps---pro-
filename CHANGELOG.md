@@ -64,6 +64,19 @@ Version actuelle : **1.2.1**
 
 ## 2. Journal des versions
 
+### v1.5.0 — 04/09/2026
+- Nouveau : bouton **"Vider entièrement cette classe de ses élèves"** (onglet Classe/Groupe),
+  avec confirmation, pour repartir d'une classe vide avant un nouvel import
+- Nouveau sur la fiche élève : bouton **"Vider la fiche de cet élève"** (avec confirmation) —
+  efface photo, notes, annotations, dispenses, téléphones, classe, sexe, date de naissance,
+  informations importées et AS, en conservant le nom, le prénom et l'historique d'appel
+- Le sexe est désormais normalisé en **"F" / "M"** dès l'import (quel que soit le mot utilisé
+  dans le fichier : "Féminin", "Masculin", "F", "M"...) et affiché ainsi partout : fiche élève,
+  liste d'appel, fiche classe (Classe/Groupe), fiche d'appel du cycle, tableau d'évaluation et
+  liste imprimable de la classe
+- Nouveau sur la fiche élève : case à cocher **"Association Sportive"**, avec un champ
+  **Activité** qui apparaît quand elle est cochée
+
 ### v1.4.0 — 04/09/2026
 - Import de liste : ajout de 3 nouvelles cibles de colonne — **Classe**, **Date de naissance**
   et **Sexe** — reconnues automatiquement sur les exports Pronote (colonnes "Classe de
