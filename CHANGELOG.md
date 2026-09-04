@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.2.0**
+Version actuelle : **1.2.1**
 
 ---
 
@@ -63,6 +63,38 @@ Version actuelle : **1.2.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.3.0 — 04/09/2026
+- Correction d'un bug important : lors d'un import de liste (mode "Remplacer"), les élèves déjà
+  présents étaient recréés avec un nouvel identifiant interne, ce qui déconnectait leur photo,
+  leurs notes, leurs annotations, leurs dispenses et leur historique d'appel — la fiche élève
+  apparaissait alors vide même si le nom était correct. Les élèves reconnus dans le fichier
+  gardent désormais leur identifiant et toutes leurs données existantes
+- Nouvel écran d'**aperçu tableau brut** du fichier importé (toutes les colonnes/lignes telles
+  quelles) avant de choisir les colonnes à utiliser
+- Le mapping se fait désormais **colonne par colonne** : pour chaque colonne du fichier, on
+  choisit ce qu'elle représente (Nom, Prénom, Nom+Prénom combinés, Classe d'origine, Téléphone
+  élève, Téléphone parent, ou "Autre info à conserver sur la fiche")
+- Gestion automatique des exports Pronote avec une colonne "Élèves" combinant nom et prénom
+  (ex. "ABATAN Noemie") : séparation automatique nom/prénom
+- Les colonnes choisies comme "Autre info" (date de naissance, sexe, e-mail, régime...) sont
+  désormais conservées et affichées dans une nouvelle section "Informations importées" sur la
+  fiche élève
+- L'import "Mettre à jour / ajouter" retrouve les élèves déjà présents (par nom/prénom) et ne
+  modifie que les champs renseignés dans le fichier : une cellule vide n'efface jamais une
+  valeur déjà saisie dans l'appli
+- L'aperçu final indique désormais, pour chaque ligne, s'il s'agit d'une mise à jour d'un élève
+  existant ou d'un nouvel élève
+
+### v1.2.1 — 04/09/2026
+- Correction du bug d'import CSV (import de liste d'appel ET import des téléphones) : le
+  fichier n'était lu qu'avec l'outil dédié Excel/ODS, ce qui pouvait échouer silencieusement
+  sur un CSV « à la française » (séparateur point-virgule, accents mal encodés) sans afficher
+  d'erreur, donnant l'impression que rien ne se passait
+- Le CSV est désormais lu et découpé indépendamment (détection automatique du séparateur
+  virgule/point-virgule, détection de l'encodage UTF-8/Windows-1252)
+- Ajout d'un message d'erreur explicite si la lecture du fichier échoue (au lieu de rester
+  silencieux)
 
 ### v1.2.0 — 04/09/2026
 - Nouvelle fonction **Import de liste d'appel** sur la fiche classe :
