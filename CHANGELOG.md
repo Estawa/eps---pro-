@@ -64,12 +64,6 @@ Version actuelle : **1.2.1**
 
 ## 2. Journal des versions
 
-### v1.6.0 — 04/09/2026
-- Nouveau sur la fiche d'appel : icône **Retard** (horloge) à côté de chaque élève, avec un
-  menu déroulant de 5 min en 5 min (5 à 60 min) pour indiquer un retard le jour de la séance
-- Les retards sont enregistrés séance par séance et cumulés automatiquement sur la fiche élève,
-  avec un total **par trimestre (T1/T2/T3) et par année scolaire**
-
 ### v1.5.0 — 04/09/2026
 - Nouveau : bouton **"Vider entièrement cette classe de ses élèves"** (onglet Classe/Groupe),
   avec confirmation, pour repartir d'une classe vide avant un nouvel import
