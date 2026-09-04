@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.2.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -740,6 +740,194 @@ function ClasseInfoModal({ classe, onClose, onSave }) {
   );
 }
 
+// ---------- Fenêtre : import d'une liste d'appel (Excel / CSV / ODS) avec mapping des colonnes ----------
+function ImportListeElevesModal({ classe, onClose, onValider }) {
+  const [etape, setEtape] = useState("choix"); // choix | mapping | apercu
+  const [nomFichier, setNomFichier] = useState("");
+  const [enTetes, setEnTetes] = useState([]);
+  const [lignesBrutes, setLignesBrutes] = useState([]);
+  const [mapping, setMapping] = useState({});
+  const [cochees, setCochees] = useState([]);
+  const [erreur, setErreur] = useState("");
+
+  const estGroupe = classe.type === "groupe" && classe.sousClasses.length > 0;
+
+  const champs = [
+    { id: "nom", label: "Nom", requis: true },
+    { id: "prenom", label: "Prénom", requis: true },
+    ...(estGroupe ? [{ id: "sousClasseId", label: "Classe d'origine" }] : []),
+    { id: "telephoneEleve", label: "Téléphone élève" },
+    { id: "telephoneParents", label: "Téléphone parent" },
+  ];
+
+  const handleFichier = (file) => {
+    setErreur("");
+    setNomFichier(file.name);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "array" });
+        const feuille = wb.Sheets[wb.SheetNames[0]];
+        const lignes = XLSX.utils.sheet_to_json(feuille, { header: 1, defval: "" });
+        const nonVides = lignes.filter((l) => Array.isArray(l) && l.some((c) => String(c).trim() !== ""));
+        if (nonVides.length < 2) {
+          setErreur("Le fichier ne contient pas assez de données (en-tête + au moins une ligne).");
+          return;
+        }
+        const [entete, ...reste] = nonVides;
+        const enTetesStr = entete.map((h) => String(h).trim());
+        setEnTetes(enTetesStr);
+        setLignesBrutes(reste);
+        const devine = {};
+        enTetesStr.forEach((h, i) => {
+          const t = normaliser(h);
+          if (t === "nom") devine.nom = i;
+          else if (t === "prenom") devine.prenom = i;
+          else if (t.includes("classe")) devine.sousClasseId = i;
+          else if (t.includes("tel") && t.includes("eleve")) devine.telephoneEleve = i;
+          else if (t.includes("tel") && (t.includes("parent") || t.includes("responsable"))) devine.telephoneParents = i;
+        });
+        setMapping(devine);
+        setCochees(reste.map(() => true));
+        setEtape("mapping");
+      } catch (err) {
+        setErreur("Impossible de lire ce fichier (format non reconnu).");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const mappingValide = mapping.nom !== undefined && mapping.prenom !== undefined;
+
+  const toggle = (i) => setCochees((c) => c.map((v, idx) => (idx === i ? !v : v)));
+  const toutCocher = (v) => setCochees((c) => c.map(() => v));
+
+  const construire = () => {
+    return lignesBrutes
+      .filter((_, i) => cochees[i])
+      .map((ligne) => {
+        const nomClasseOrigine = mapping.sousClasseId !== undefined ? String(ligne[mapping.sousClasseId] || "").trim() : "";
+        const sousClasse = nomClasseOrigine
+          ? classe.sousClasses.find((s) => normaliser(s.nom) === normaliser(nomClasseOrigine))
+          : null;
+        return {
+          id: uid(),
+          nom: String(ligne[mapping.nom] || "").trim(),
+          prenom: mapping.prenom !== undefined ? String(ligne[mapping.prenom] || "").trim() : "",
+          photo: null,
+          notes: "",
+          annotations: [],
+          telephoneEleve: mapping.telephoneEleve !== undefined ? String(ligne[mapping.telephoneEleve] || "").trim() : "",
+          telephoneParents: mapping.telephoneParents !== undefined ? String(ligne[mapping.telephoneParents] || "").trim() : "",
+          sousClasseId: sousClasse ? sousClasse.id : null,
+          dispenses: [],
+        };
+      })
+      .filter((e) => e.nom !== "" || e.prenom !== "");
+  };
+
+  const valider = (mode) => {
+    const eleves = construire();
+    if (eleves.length === 0) {
+      setErreur("Aucun élève sélectionné.");
+      return;
+    }
+    onValider(eleves, mode);
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, maxHeight: "88vh", overflowY: "auto", background: CARD, borderRadius: "18px 18px 0 0", padding: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Importer une liste — {classe.nom}</div>
+          <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)" }}><X size={20} /></button>
+        </div>
+
+        {erreur && <div style={{ fontSize: 12.5, color: "var(--st-absent-c)", background: "var(--danger-soft, rgba(220,38,38,0.08))", borderRadius: 10, padding: "8px 10px", marginBottom: 12 }}>{erreur}</div>}
+
+        {etape === "choix" && (
+          <>
+            <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 10 }}>Formats acceptés : .csv, .xlsx, .ods</div>
+            <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "28px 0", borderRadius: 12, border: `1.5px dashed ${PRIMARY}`, color: PRIMARY, fontSize: 13, cursor: "pointer" }}>
+              <input type="file" accept=".csv,.xlsx,.xls,.ods" onChange={(e) => e.target.files[0] && handleFichier(e.target.files[0])} style={{ display: "none" }} />
+              <Upload size={20} />
+              Toucher pour choisir un fichier
+            </label>
+          </>
+        )}
+
+        {etape === "mapping" && (
+          <>
+            <div style={{ fontSize: 12, color: "var(--muted-soft)", marginBottom: 12 }}>{nomFichier} · {lignesBrutes.length} ligne(s) détectée(s)</div>
+            <div style={{ fontSize: 12.5, color: INK, marginBottom: 10 }}>Associez chaque colonne de votre fichier :</div>
+            {champs.map((champ) => (
+              <div key={champ.id} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 4 }}>
+                  {champ.label}{champ.requis && <span style={{ color: "var(--st-absent-c)" }}> *</span>}
+                </div>
+                <select
+                  value={mapping[champ.id] ?? ""}
+                  onChange={(e) => setMapping((m) => ({ ...m, [champ.id]: e.target.value === "" ? undefined : Number(e.target.value) }))}
+                  style={{ width: "100%", padding: 9, borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 13.5, background: CARD, color: INK }}
+                >
+                  <option value="">— Non importé —</option>
+                  {enTetes.map((h, i) => (
+                    <option key={i} value={i}>{h || `Colonne ${i + 1}`}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 14 }}>
+              <button onClick={() => setEtape("choix")} style={{ border: "none", background: "none", color: "var(--muted-soft)", fontSize: 13, cursor: "pointer" }}>← Changer de fichier</button>
+              <button
+                onClick={() => { if (!mappingValide) { setErreur("Associez au minimum Nom et Prénom."); return; } setErreur(""); setEtape("apercu"); }}
+                style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              >
+                Aperçu →
+              </button>
+            </div>
+          </>
+        )}
+
+        {etape === "apercu" && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{cochees.filter(Boolean).length} / {lignesBrutes.length} élève(s) sélectionné(s)</div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => toutCocher(true)} style={{ border: "none", background: "none", color: PRIMARY, fontSize: 11.5, cursor: "pointer" }}>Tout cocher</button>
+                <button onClick={() => toutCocher(false)} style={{ border: "none", background: "none", color: "var(--muted-soft)", fontSize: 11.5, cursor: "pointer" }}>Tout décocher</button>
+              </div>
+            </div>
+            <div style={{ maxHeight: 260, overflowY: "auto", border: `1px solid ${LINE}`, borderRadius: 10, marginBottom: 14 }}>
+              {lignesBrutes.map((ligne, i) => (
+                <label key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderBottom: i < lignesBrutes.length - 1 ? `1px solid ${LINE}` : "none", opacity: cochees[i] ? 1 : 0.4 }}>
+                  <input type="checkbox" checked={cochees[i]} onChange={() => toggle(i)} />
+                  <span style={{ fontSize: 13.5, color: INK }}>
+                    {ligne[mapping.nom]} <span style={{ color: "var(--muted)" }}>{mapping.prenom !== undefined ? ligne[mapping.prenom] : ""}</span>
+                    {mapping.sousClasseId !== undefined && ligne[mapping.sousClasseId] && (
+                      <span style={{ fontSize: 10.5, color: ACCENT, marginLeft: 6 }}>· {ligne[mapping.sousClasseId]}</span>
+                    )}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <button onClick={() => valider("ajouter")} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                Ajouter aux élèves existants
+              </button>
+              <button onClick={() => { if (confirm("Remplacer entièrement la liste actuelle des élèves de cette classe ?")) valider("remplacer"); }} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: `1px solid ${LINE}`, background: CARD, color: "var(--st-absent-c)", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                Remplacer la liste
+              </button>
+            </div>
+            <button onClick={() => setEtape("mapping")} style={{ width: "100%", border: "none", background: "none", color: "var(--muted-soft)", fontSize: 12.5, cursor: "pointer" }}>← Revenir au mapping des colonnes</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChrono, onOpenBlocNote, evaluations, onOpenEvaluation }) {
   const [printMode, setPrintMode] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -748,6 +936,15 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
   const [eleveEnEdition, setEleveEnEdition] = useState(null);
   const [formSousClasseOuvert, setFormSousClasseOuvert] = useState(false);
   const [renommageOuvert, setRenommageOuvert] = useState(false);
+  const [importListeOuvert, setImportListeOuvert] = useState(false);
+
+  const appliquerImportListe = (elevesImportes, mode) => {
+    updateClasse({
+      ...classe,
+      eleves: mode === "remplacer" ? elevesImportes : [...classe.eleves, ...elevesImportes],
+    });
+    setImportMsg(`${elevesImportes.length} élève(s) importé(s).`);
+  };
 
   const renommerClasse = ({ nom }) => {
     updateClasse({ ...classe, nom });
@@ -952,11 +1149,22 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
         </button>
       </div>
 
+      <button onClick={() => setImportListeOuvert(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "9px 0", borderRadius: 10, border: `1.5px dashed ${PRIMARY}`, background: "none", color: PRIMARY, fontSize: 12.5, fontWeight: 600, cursor: "pointer", marginBottom: 8 }}>
+        <Upload size={14} /> Importer une liste d'appel (Excel / CSV / ODS)
+      </button>
+
       <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "9px 0", borderRadius: 10, border: `1.5px dashed ${LINE}`, color: "var(--muted-soft)", fontSize: 12.5, cursor: "pointer", marginBottom: importMsg ? 6 : 14 }}>
         <input type="file" accept=".csv,.xlsx,.xls,.ods" onChange={(e) => e.target.files[0] && importerTelephones(e.target.files[0])} style={{ display: "none" }} />
         <Upload size={14} /> Importer les téléphones (Excel / CSV / ODS)
       </label>
       {importMsg && <div style={{ fontSize: 11.5, color: PRIMARY, marginBottom: 14, textAlign: "center" }}>{importMsg}</div>}
+      {importListeOuvert && (
+        <ImportListeElevesModal
+          classe={classe}
+          onClose={() => setImportListeOuvert(false)}
+          onValider={appliquerImportListe}
+        />
+      )}
 
       {(classe.chronos || []).length > 0 && (
         <div style={{ marginBottom: 16 }}>
