@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.2.1";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -217,6 +217,74 @@ function initials(prenom, nom) {
 function normaliser(s) {
   return (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 }
+
+// ---------- Lecture robuste de fichiers CSV (séparateur , ou ; + détection d'encodage) ----------
+function decoderTexteFichier(buffer) {
+  const octets = new Uint8Array(buffer);
+  const aBom = octets.length > 3 && octets[0] === 0xEF && octets[1] === 0xBB && octets[2] === 0xBF;
+  let texte = new TextDecoder("utf-8").decode(octets);
+  const nbRemplacement = (texte.match(/\uFFFD/g) || []).length;
+  if (!aBom && nbRemplacement > 0) {
+    try {
+      texte = new TextDecoder("windows-1252").decode(octets);
+    } catch (e) {
+      // Encodage windows-1252 indisponible : on garde le texte UTF-8 décodé.
+    }
+  }
+  return texte;
+}
+
+function parseCsvTexte(texte) {
+  const premiereLigne = texte.split(/\r\n|\n|\r/).find((l) => l.trim() !== "") || "";
+  const nbVirgules = (premiereLigne.match(/,/g) || []).length;
+  const nbPointsVirgules = (premiereLigne.match(/;/g) || []).length;
+  const sep = nbPointsVirgules > nbVirgules ? ";" : ",";
+
+  const lignes = [];
+  let ligneCourante = [];
+  let champ = "";
+  let dansGuillemets = false;
+  for (let i = 0; i < texte.length; i++) {
+    const c = texte[i];
+    const suivant = texte[i + 1];
+    if (dansGuillemets) {
+      if (c === '"' && suivant === '"') { champ += '"'; i++; }
+      else if (c === '"') { dansGuillemets = false; }
+      else { champ += c; }
+    } else if (c === '"') {
+      dansGuillemets = true;
+    } else if (c === sep) {
+      ligneCourante.push(champ);
+      champ = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && suivant === "\n") i++;
+      ligneCourante.push(champ);
+      champ = "";
+      lignes.push(ligneCourante);
+      ligneCourante = [];
+    } else {
+      champ += c;
+    }
+  }
+  if (champ !== "" || ligneCourante.length) {
+    ligneCourante.push(champ);
+    lignes.push(ligneCourante);
+  }
+  return lignes.map((l) => l.map((c) => c.trim()));
+}
+
+function lireLignesTableur(file, buffer) {
+  const extension = file.name.split(".").pop().toLowerCase();
+  if (extension === "csv") {
+    const texte = decoderTexteFichier(buffer);
+    return parseCsvTexte(texte);
+  }
+  const wb = XLSX.read(buffer, { type: "array" });
+  const feuille = wb.Sheets[wb.SheetNames[0]];
+  if (!feuille) throw new Error("Aucune feuille trouvée dans ce fichier.");
+  return XLSX.utils.sheet_to_json(feuille, { header: 1, defval: "" });
+}
+
 
 function dispenseDuJour(eleve, dateStr) {
   return (eleve.dispenses || []).find((d) => dateStr >= d.dateDebut && dateStr <= d.dateFin) || null;
@@ -764,11 +832,12 @@ function ImportListeElevesModal({ classe, onClose, onValider }) {
     setErreur("");
     setNomFichier(file.name);
     const reader = new FileReader();
+    reader.onerror = () => {
+      setErreur("La lecture du fichier a échoué. Réessayez, ou vérifiez que le fichier n'est pas ouvert ailleurs.");
+    };
     reader.onload = (evt) => {
       try {
-        const wb = XLSX.read(evt.target.result, { type: "array" });
-        const feuille = wb.Sheets[wb.SheetNames[0]];
-        const lignes = XLSX.utils.sheet_to_json(feuille, { header: 1, defval: "" });
+        const lignes = lireLignesTableur(file, evt.target.result);
         const nonVides = lignes.filter((l) => Array.isArray(l) && l.some((c) => String(c).trim() !== ""));
         if (nonVides.length < 2) {
           setErreur("Le fichier ne contient pas assez de données (en-tête + au moins une ligne).");
@@ -987,11 +1056,18 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
 
   const importerTelephones = (file) => {
     const reader = new FileReader();
+    reader.onerror = () => {
+      setImportMsg("La lecture du fichier a échoué. Réessayez.");
+    };
     reader.onload = (evt) => {
       try {
-        const wb = XLSX.read(evt.target.result, { type: "array" });
-        const feuille = wb.Sheets[wb.SheetNames[0]];
-        const lignes = XLSX.utils.sheet_to_json(feuille, { defval: "" });
+        const lignesTab = lireLignesTableur(file, evt.target.result);
+        const [entete, ...reste] = lignesTab.filter((l) => Array.isArray(l) && l.some((c) => String(c).trim() !== ""));
+        const lignes = reste.map((l) => {
+          const obj = {};
+          entete.forEach((h, i) => { obj[h] = l[i] ?? ""; });
+          return obj;
+        });
         let maj = 0;
         const eleves = classe.eleves.map((e) => {
           const ligne = lignes.find((l) => {
