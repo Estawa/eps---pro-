@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.1.0**
+Version actuelle : **1.2.0**
 
 ---
 
@@ -23,6 +23,7 @@ Version actuelle : **1.1.0**
 ### Gestion de classe (Classe/Groupe classe, Appel, Trombinoscope)
 - Classes simples et groupes classe (jusqu'à 5 classes d'origine réunies)
 - Fiche classe : PP, CPE, délégués, photo, renommage
+- Import d'une liste d'appel complète (Excel/CSV/ODS) avec mapping des colonnes et aperçu avant validation
 - Appel avec statuts Présent / Sans tenue / Dispensé / Absent, compteur d'oublis de tenue par cycle
 - Gestion des dispenses (ponctuelles ou par période), avec photo de justificatif dupliquée dans Documents
 - Annotations rapides horodatées (positif/négatif), contextualisées à l'activité du cycle en cours
@@ -62,6 +63,18 @@ Version actuelle : **1.1.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.2.0 — 04/09/2026
+- Nouvelle fonction **Import de liste d'appel** sur la fiche classe :
+  - bouton dédié "Importer une liste d'appel (Excel / CSV / ODS)"
+  - lecture du fichier puis écran de mapping des colonnes (Nom, Prénom, Classe d'origine
+    pour les groupes classe, Téléphone élève, Téléphone parent), avec pré-détection
+    automatique des en-têtes courants
+  - aperçu de la liste avec cases à cocher pour exclure des lignes avant validation
+  - choix entre "Ajouter aux élèves existants" ou "Remplacer la liste" (avec confirmation
+    pour le remplacement)
+  - pour un groupe classe, rattachement automatique de chaque élève à sa classe d'origine
+    si le nom importé correspond à une classe d'origine déjà créée
 
 ### v1.1.0 — 31/08/2026
 - Ajout du numéro de version discret dans l'application (affiché en haut, à côté de la signature)
