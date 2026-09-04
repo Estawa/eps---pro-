@@ -8,14 +8,14 @@ import {
   LayoutGrid, Home, RefreshCw, Archive, StickyNote, ThumbsUp, ThumbsDown, Table2, Sun, Moon, ImagePlus,
   Wrench, Timer, Play, Pause, RotateCcw, Flag, Phone, Upload, GraduationCap, Star, Pencil,
   FileText, Image as ImageIcon, Video, Paperclip, FolderPlus, Download, RotateCw, RotateCcw as RotateCcwIcon, Folder,
-  Table, Sigma, ExternalLink, Lock, Globe, Mail, HardDrive, Link2
+  Table, Sigma, ExternalLink, Lock, Globe, Mail, HardDrive, Link2, Search
 } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.3.0";
+const APP_VERSION = "1.4.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -592,6 +592,7 @@ function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, u
     { key: "appel", label: "Appel" },
     { key: "classes", label: "Classe/Groupe" },
     { key: "trombi", label: "Trombi" },
+    { key: "recherche", label: "Recherche" },
   ];
   return (
     <div>
@@ -613,6 +614,7 @@ function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, u
       {sousOnglet === "classes" && <ClassesScreen classes={classes} setClasses={setClasses} onOpenClass={onOpenClass} />}
       {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} />}
       {sousOnglet === "trombi" && <TrombiScreen classes={classes} updateEleve={updateEleve} updateClasse={updateClasse} onOpenEleve={onOpenEleve} />}
+      {sousOnglet === "recherche" && <RechercheElevesScreen classes={classes} onOpenEleve={onOpenEleve} />}
     </div>
   );
 }
@@ -831,6 +833,9 @@ const CIBLES_IMPORT = [
   { id: "nom", label: "Nom" },
   { id: "prenom", label: "Prénom" },
   { id: "sousClasseId", label: "Classe d'origine" },
+  { id: "classe", label: "Classe" },
+  { id: "dateNaissance", label: "Date de naissance" },
+  { id: "sexe", label: "Sexe" },
   { id: "telephoneEleve", label: "Téléphone élève" },
   { id: "telephoneParents", label: "Téléphone parent" },
   { id: "autre", label: "Autre info à conserver sur la fiche" },
@@ -879,7 +884,11 @@ function ImportListeElevesModal({ classe, onClose, onValider }) {
           else if (t === "prenom") devine[i] = "prenom";
           else if (t.includes("tel") && t.includes("eleve")) devine[i] = "telephoneEleve";
           else if (t.includes("tel") && (t.includes("parent") || t.includes("responsable"))) devine[i] = "telephoneParents";
+          else if (t.includes("naissance") || t.includes("ne(e) le") || t.includes("nee le")) devine[i] = "dateNaissance";
+          else if (t === "sexe") devine[i] = "sexe";
+          else if (t.includes("rattachement")) devine[i] = "classe";
           else if (estGroupe && t.includes("classe")) devine[i] = "sousClasseId";
+          else if (!estGroupe && t.includes("classe")) devine[i] = "classe";
           else if (["eleve", "eleves", "identite", "nom et prenom", "nom prenom"].includes(t)) devine[i] = "nomPrenom";
         });
         setCibles(devine);
@@ -903,6 +912,9 @@ function ImportListeElevesModal({ classe, onClose, onValider }) {
     const iPrenom = indexPour("prenom");
     const iNomPrenom = indexPour("nomPrenom");
     const iSousClasse = indexPour("sousClasseId");
+    const iClasse = indexPour("classe");
+    const iDateNaissance = indexPour("dateNaissance");
+    const iSexe = indexPour("sexe");
     const iTelE = indexPour("telephoneEleve");
     const iTelP = indexPour("telephoneParents");
     const indexAutres = Object.entries(cibles).filter(([, c]) => c === "autre").map(([i]) => Number(i));
@@ -930,6 +942,9 @@ function ImportListeElevesModal({ classe, onClose, onValider }) {
       matchId: existant ? existant.id : null,
       nom,
       prenom,
+      classe: iClasse !== undefined ? String(ligne[iClasse] || "").trim() : "",
+      dateNaissance: iDateNaissance !== undefined ? String(ligne[iDateNaissance] || "").trim() : "",
+      sexe: iSexe !== undefined ? String(ligne[iSexe] || "").trim() : "",
       telephoneEleve: iTelE !== undefined ? String(ligne[iTelE] || "").trim() : "",
       telephoneParents: iTelP !== undefined ? String(ligne[iTelP] || "").trim() : "",
       sousClasseId: sousClasse ? sousClasse.id : null,
@@ -1111,6 +1126,9 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
     nom: importe.nom || existant.nom,
     prenom: importe.prenom || existant.prenom,
     sousClasseId: importe.sousClasseId || existant.sousClasseId,
+    classe: importe.classe || existant.classe,
+    dateNaissance: importe.dateNaissance || existant.dateNaissance,
+    sexe: importe.sexe || existant.sexe,
     telephoneEleve: importe.telephoneEleve || existant.telephoneEleve,
     telephoneParents: importe.telephoneParents || existant.telephoneParents,
     donneesImportees: { ...(existant.donneesImportees || {}), ...(importe.donneesImportees || {}) },
@@ -1641,6 +1659,89 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
   );
 }
 
+// ---------- Écran : Recherche d'élèves (toutes classes, critères combinés) ----------
+function RechercheElevesScreen({ classes, onOpenEleve }) {
+  const [texte, setTexte] = useState("");
+  const [classeId, setClasseId] = useState("");
+  const [sexe, setSexe] = useState("");
+  const [classeReelle, setClasseReelle] = useState("");
+
+  const resultats = useMemo(() => {
+    const t = normaliser(texte);
+    const cr = normaliser(classeReelle);
+    const lignes = [];
+    classes.forEach((c) => {
+      if (classeId && c.id !== classeId) return;
+      (c.eleves || []).forEach((e) => {
+        if (t && !normaliser(`${e.prenom} ${e.nom}`).includes(t)) return;
+        if (sexe && normaliser(e.sexe || "") !== normaliser(sexe)) return;
+        if (cr && !normaliser(e.classe || "").includes(cr)) return;
+        lignes.push({ ...e, classeId: c.id, classeNomEps: c.nom });
+      });
+    });
+    return lignes.sort((a, b) => a.nom.localeCompare(b.nom));
+  }, [classes, texte, classeId, sexe, classeReelle]);
+
+  const aucunCritere = !texte && !classeId && !sexe && !classeReelle;
+  const inputStyle = { width: "100%", padding: 10, borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 13.5, background: CARD, color: INK };
+
+  return (
+    <div style={{ padding: 16 }}>
+      <div style={{ position: "relative", marginBottom: 10 }}>
+        <Search size={15} style={{ position: "absolute", left: 10, top: 12, color: "var(--muted-soft)" }} />
+        <input
+          value={texte}
+          onChange={(e) => setTexte(e.target.value)}
+          placeholder="Nom ou prénom"
+          style={{ ...inputStyle, paddingLeft: 32 }}
+        />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+        <select value={classeId} onChange={(e) => setClasseId(e.target.value)} style={inputStyle}>
+          <option value="">Toutes les classes</option>
+          {classes.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+        </select>
+        <select value={sexe} onChange={(e) => setSexe(e.target.value)} style={inputStyle}>
+          <option value="">Tous</option>
+          <option value="Masculin">Masculin</option>
+          <option value="Féminin">Féminin</option>
+        </select>
+      </div>
+      <input
+        value={classeReelle}
+        onChange={(e) => setClasseReelle(e.target.value)}
+        placeholder="Classe (ex : 1G3)"
+        style={{ ...inputStyle, marginBottom: 14 }}
+      />
+
+      <div style={{ fontSize: 12, color: "var(--muted-soft)", marginBottom: 8 }}>
+        {aucunCritere ? `${resultats.length} élève(s) au total` : `${resultats.length} résultat(s)`}
+      </div>
+
+      <div style={{ border: `1px solid ${LINE}`, borderRadius: 10, overflow: "hidden" }}>
+        {resultats.length === 0 && (
+          <div style={{ padding: 16, fontSize: 13, color: "var(--muted-soft)", textAlign: "center" }}>Aucun élève ne correspond à ces critères.</div>
+        )}
+        {resultats.map((e, i) => (
+          <div
+            key={e.id}
+            onClick={() => onOpenEleve(e.classeId, e.id)}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderBottom: i < resultats.length - 1 ? `1px solid ${LINE}` : "none", cursor: "pointer" }}
+          >
+            <Avatar eleve={e} size={34} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{e.prenom} {e.nom}</div>
+              <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>
+                {[e.classeNomEps, e.classe, e.sexe].filter(Boolean).join(" · ")}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ---------- Écran : Appel ----------
 function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio }) {
   const [classeId, setClasseId] = useState(classes[0]?.id);
@@ -2060,6 +2161,11 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
         <div>
           <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 19, color: INK }}>{eleve.prenom} {eleve.nom}</div>
           <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{classe.nom}</div>
+          {(eleve.classe || eleve.sexe || eleve.dateNaissance) && (
+            <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginTop: 2 }}>
+              {[eleve.classe, eleve.sexe, eleve.dateNaissance ? `né(e) le ${eleve.dateNaissance}` : null].filter(Boolean).join(" · ")}
+            </div>
+          )}
         </div>
       </div>
 
