@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.5.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -216,6 +216,14 @@ function initials(prenom, nom) {
 
 function normaliser(s) {
   return (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+}
+
+// Ramène toute variante de sexe importée ou saisie ("Masculin", "Féminin", "M", "F"...) à "M" ou "F".
+function normaliserSexe(valeur) {
+  const t = normaliser(valeur);
+  if (["m", "masculin", "garcon", "homme", "h"].includes(t)) return "M";
+  if (["f", "feminin", "fille", "femme"].includes(t)) return "F";
+  return (valeur || "").toString().trim();
 }
 
 // Sépare une cellule "NOM Prénom" (convention Pronote : le nom de famille est en majuscules)
@@ -944,7 +952,7 @@ function ImportListeElevesModal({ classe, onClose, onValider }) {
       prenom,
       classe: iClasse !== undefined ? String(ligne[iClasse] || "").trim() : "",
       dateNaissance: iDateNaissance !== undefined ? String(ligne[iDateNaissance] || "").trim() : "",
-      sexe: iSexe !== undefined ? String(ligne[iSexe] || "").trim() : "",
+      sexe: iSexe !== undefined ? normaliserSexe(ligne[iSexe]) : "",
       telephoneEleve: iTelE !== undefined ? String(ligne[iTelE] || "").trim() : "",
       telephoneParents: iTelP !== undefined ? String(ligne[iTelP] || "").trim() : "",
       sousClasseId: sousClasse ? sousClasse.id : null,
@@ -1118,6 +1126,13 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
   const [formSousClasseOuvert, setFormSousClasseOuvert] = useState(false);
   const [renommageOuvert, setRenommageOuvert] = useState(false);
   const [importListeOuvert, setImportListeOuvert] = useState(false);
+  const [confirmationVideClasse, setConfirmationVideClasse] = useState(false);
+
+  const viderClasse = () => {
+    updateClasse({ ...classe, eleves: [] });
+    setConfirmationVideClasse(false);
+    setImportMsg("Classe vidée de tous ses élèves.");
+  };
 
   // Fusionne une ligne importée dans un élève existant : ne touche à un champ que si la valeur importée n'est pas vide,
   // et ne modifie jamais id/photo/notes/annotations/dispenses/historique d'appel de l'élève existant.
@@ -1267,6 +1282,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
               <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>N°</th>
               <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>Nom</th>
               <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>Prénom</th>
+              <th style={{ textAlign: "left", borderBottom: "2px solid #000", padding: 6 }}>Sexe</th>
             </tr>
           </thead>
           <tbody>
@@ -1275,6 +1291,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
                 <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{i + 1}</td>
                 <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{e.nom}</td>
                 <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{e.prenom}</td>
+                <td style={{ padding: 6, borderBottom: "1px solid #ccc" }}>{e.sexe ? normaliserSexe(e.sexe) : ""}</td>
               </tr>
             ))}
           </tbody>
@@ -1387,6 +1404,24 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
         />
       )}
 
+      <div style={{ marginBottom: 16 }}>
+        {!confirmationVideClasse ? (
+          <button onClick={() => setConfirmationVideClasse(true)} style={{ border: "none", background: "none", color: "var(--st-absent-c)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, margin: "0 auto" }}>
+            <Trash2 size={12} /> Vider entièrement cette classe de ses élèves
+          </button>
+        ) : (
+          <div style={{ border: `1px solid var(--st-absent-bd, ${LINE})`, background: "var(--danger-soft, rgba(220,38,38,0.06))", borderRadius: 10, padding: 10 }}>
+            <div style={{ fontSize: 12, color: INK, marginBottom: 8 }}>
+              Supprime tous les élèves de "{classe.nom}" (fiches, photos, notes, dispenses). Cette action est irréversible. Confirmer ?
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={viderClasse} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: "none", background: "var(--st-absent-c)", color: "#fff", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>Vider la classe</button>
+              <button onClick={() => setConfirmationVideClasse(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: INK, fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>Annuler</button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {(classe.chronos || []).length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
@@ -1469,6 +1504,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
             <Avatar eleve={e} size={34} />
             <div style={{ fontSize: 14.5, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {e.nom} <span style={{ color: "var(--muted)" }}>{e.prenom}</span>
+              {e.sexe && <span style={{ fontSize: 10.5, color: "var(--muted-soft)", marginLeft: 6 }}>· {normaliserSexe(e.sexe)}</span>}
               {classe.type === "groupe" && e.sousClasseId && (
                 <span style={{ fontSize: 10.5, color: ACCENT, marginLeft: 6 }}>· {classe.sousClasses.find((s) => s.id === e.sousClasseId)?.nom}</span>
               )}
@@ -1732,7 +1768,7 @@ function RechercheElevesScreen({ classes, onOpenEleve }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{e.prenom} {e.nom}</div>
               <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>
-                {[e.classeNomEps, e.classe, e.sexe].filter(Boolean).join(" · ")}
+                {[e.classeNomEps, e.classe, e.sexe ? normaliserSexe(e.sexe) : null].filter(Boolean).join(" · ")}
               </div>
             </div>
           </div>
@@ -1907,7 +1943,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
           title={dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
           style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
         >
-          {e.prenom} {e.nom}
+          {e.prenom} {e.nom}{e.sexe && <span style={{ fontSize: 10.5, fontWeight: 400, color: "var(--muted-soft)" }}> · {normaliserSexe(e.sexe)}</span>}
         </div>
         <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
           {Object.entries(STATUTS).map(([key, s]) => {
@@ -2042,11 +2078,13 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   const [notes, setNotes] = useState(eleve.notes || "");
   const [telE, setTelE] = useState(eleve.telephoneEleve || "");
   const [telP, setTelP] = useState(eleve.telephoneParents || "");
+  const [activiteAS, setActiviteAS] = useState(eleve.activiteAS || "");
   const estDelegue = (classe.delegues || []).includes(eleve.id);
   const [formDispenseOuvert, setFormDispenseOuvert] = useState(false);
   const [dispenseEnEdition, setDispenseEnEdition] = useState(null);
   const [photoEnEditionDispense, setPhotoEnEditionDispense] = useState(null); // { dispenseId }
   const [impressionDispenses, setImpressionDispenses] = useState(null); // array de dispenses à imprimer
+  const [confirmationVidage, setConfirmationVidage] = useState(false);
 
   const historique = useMemo(() => {
     const lignes = [];
@@ -2074,6 +2112,31 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   const saveNotes = () => updateEleve({ ...eleve, notes });
   const saveTelE = () => updateEleve({ ...eleve, telephoneEleve: telE });
   const saveTelP = () => updateEleve({ ...eleve, telephoneParents: telP });
+  const toggleAS = () => updateEleve({ ...eleve, estAS: !eleve.estAS });
+  const saveActiviteAS = () => updateEleve({ ...eleve, activiteAS });
+
+  const viderFiche = () => {
+    updateEleve({
+      ...eleve,
+      photo: null,
+      notes: "",
+      annotations: [],
+      dispenses: [],
+      telephoneEleve: "",
+      telephoneParents: "",
+      classe: "",
+      dateNaissance: "",
+      sexe: "",
+      donneesImportees: {},
+      estAS: false,
+      activiteAS: "",
+    });
+    setNotes("");
+    setTelE("");
+    setTelP("");
+    setActiviteAS("");
+    setConfirmationVidage(false);
+  };
 
   const dispenses = useMemo(() => [...(eleve.dispenses || [])].sort((a, b) => b.dateDebut.localeCompare(a.dateDebut)), [eleve.dispenses]);
 
@@ -2163,7 +2226,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
           <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{classe.nom}</div>
           {(eleve.classe || eleve.sexe || eleve.dateNaissance) && (
             <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginTop: 2 }}>
-              {[eleve.classe, eleve.sexe, eleve.dateNaissance ? `né(e) le ${eleve.dateNaissance}` : null].filter(Boolean).join(" · ")}
+              {[eleve.classe, eleve.sexe ? normaliserSexe(eleve.sexe) : null, eleve.dateNaissance ? `né(e) le ${eleve.dateNaissance}` : null].filter(Boolean).join(" · ")}
             </div>
           )}
         </div>
@@ -2279,6 +2342,40 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
           <div style={{ fontSize: 11, color: "var(--muted-soft)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}><Phone size={11} /> Tél. parents</div>
           <input value={telP} onChange={(e) => setTelP(e.target.value)} onBlur={saveTelP} placeholder="06 xx xx xx xx" style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }} />
         </div>
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginBottom: eleve.estAS ? 8 : 0 }}>
+          <input type="checkbox" checked={!!eleve.estAS} onChange={toggleAS} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: INK }}>Association Sportive</span>
+        </label>
+        {eleve.estAS && (
+          <input
+            value={activiteAS}
+            onChange={(e) => setActiviteAS(e.target.value)}
+            onBlur={saveActiviteAS}
+            placeholder="Activité (ex. Escalade, Musculation...)"
+            style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }}
+          />
+        )}
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        {!confirmationVidage ? (
+          <button onClick={() => setConfirmationVidage(true)} style={{ border: "none", background: "none", color: "var(--st-absent-c)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+            <RefreshCw size={12} /> Vider la fiche de cet élève
+          </button>
+        ) : (
+          <div style={{ border: `1px solid var(--st-absent-bd, ${LINE})`, background: "var(--danger-soft, rgba(220,38,38,0.06))", borderRadius: 10, padding: 10 }}>
+            <div style={{ fontSize: 12, color: INK, marginBottom: 8 }}>
+              Efface photo, notes, annotations, dispenses, téléphones, classe, sexe, date de naissance et AS de cet élève (nom, prénom et historique d'appel sont conservés). Confirmer ?
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={viderFiche} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: "none", background: "var(--st-absent-c)", color: "#fff", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>Vider la fiche</button>
+              <button onClick={() => setConfirmationVidage(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: INK, fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>Annuler</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
@@ -5261,7 +5358,7 @@ function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, set
                     <tr key={`${e.id}-${ligne}`}>
                       {ligne === 0 && (
                         <td rowSpan={evaluation.lignesParEleve} style={{ position: "sticky", left: 0, background: CARD, padding: "7px 10px", borderRight: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}`, whiteSpace: "nowrap", verticalAlign: "top", fontWeight: 600, color: INK }}>
-                          {e.prenom} {e.nom}
+                          {e.prenom} {e.nom}{e.sexe && <span style={{ fontWeight: 400, color: "var(--muted-soft)" }}> · {normaliserSexe(e.sexe)}</span>}
                         </td>
                       )}
                       {evaluation.colonnes.map((col) => {
@@ -5548,7 +5645,7 @@ function ClasseCycleSheet({ classe }) {
               {eleves.map((e) => (
                 <tr key={e.id}>
                   <td style={{ position: "sticky", left: 0, background: CARD, padding: "7px 10px", borderRight: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}`, whiteSpace: "nowrap" }}>
-                    {e.prenom} {e.nom}
+                    {e.prenom} {e.nom}{e.sexe && <span style={{ color: "var(--muted-soft)" }}> · {normaliserSexe(e.sexe)}</span>}
                   </td>
                   {dates.map((s) => {
                     const st = s.appels[e.id];
