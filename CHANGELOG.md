@@ -64,6 +64,14 @@ Version actuelle : **1.2.1**
 
 ## 2. Journal des versions
 
+### v1.4.0 — 04/09/2026
+- Import de liste : ajout de 3 nouvelles cibles de colonne — **Classe**, **Date de naissance**
+  et **Sexe** — reconnues automatiquement sur les exports Pronote (colonnes "Classe de
+  rattachement", "Né(e) le", "Sexe") et affichées sur la fiche élève
+- Nouvel onglet **Recherche** (à côté de Trombi, dans Gestion de classe) : recherche d'élèves
+  toutes classes confondues par nom/prénom, classe EPS, classe réelle et sexe, avec accès
+  direct à la fiche élève depuis les résultats
+
 ### v1.3.0 — 04/09/2026
 - Correction d'un bug important : lors d'un import de liste (mode "Remplacer"), les élèves déjà
   présents étaient recréés avec un nouvel identifiant interne, ce qui déconnectait leur photo,
