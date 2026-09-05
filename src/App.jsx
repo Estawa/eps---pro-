@@ -319,7 +319,7 @@ function convertirAbsencesEnDispense(classe, eleveId, dateDebut, dateFin) {
     ...classe,
     cycles: classe.cycles.map((cy) => ({
       ...cy,
-      seances: cy.seances.map((s) => {
+      seances: (cy.seances || []).map((s) => {
         if (s.date >= dateDebut && s.date <= dateFin && s.appels[eleveId] === "absent") {
           return { ...s, appels: { ...s.appels, [eleveId]: "dispense" } };
         }
@@ -1846,7 +1846,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   const [detailsOuverts, setDetailsOuverts] = useState(false);
   const [dispenseCible, setDispenseCible] = useState(null); // élève pour lequel on configure une dispense
 
-  const seanceExistante = useMemo(() => cycle?.seances.find((s) => s.date === date), [cycle, date]);
+  const seanceExistante = useMemo(() => (cycle?.seances || []).find((s) => s.date === date), [cycle, date]);
 
   React.useEffect(() => {
     setStatuts(seanceExistante ? { ...seanceExistante.appels } : {});
@@ -1856,7 +1856,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 
   const comptesST = useMemo(() => {
     const comptes = {};
-    cycle?.seances.forEach((s) => {
+    (cycle?.seances || []).forEach((s) => {
       if (s.id === seanceExistante?.id) return;
       Object.entries(s.appels).forEach(([eid, st]) => {
         if (st === "sans_tenue") comptes[eid] = (comptes[eid] || 0) + 1;
@@ -1967,10 +1967,11 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 
   const enregistrer = () => {
     const dernierCycle = classe.cycles[classe.cycles.length - 1];
-    const existeDeja = dernierCycle.seances.some((s) => s.date === date);
+    const seancesActuelles = dernierCycle.seances || [];
+    const existeDeja = seancesActuelles.some((s) => s.date === date);
     const nouvellesSeances = existeDeja
-      ? dernierCycle.seances.map((s) => s.date === date ? { ...s, appels: statuts, retards } : s)
-      : [...dernierCycle.seances, { id: uid(), date, appels: statuts, retards }];
+      ? seancesActuelles.map((s) => s.date === date ? { ...s, appels: statuts, retards } : s)
+      : [...seancesActuelles, { id: uid(), date, appels: statuts, retards }];
     const cycles = classe.cycles.map((c, i) => i === classe.cycles.length - 1 ? { ...c, seances: nouvellesSeances } : c);
     updateClasse({ ...classe, cycles });
     setSaved(true);
@@ -2178,7 +2179,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   const historique = useMemo(() => {
     const lignes = [];
     classe.cycles.forEach((cy) => {
-      cy.seances.forEach((s) => {
+      (cy.seances || []).forEach((s) => {
         if (s.appels[eleve.id]) lignes.push({ date: s.date, cycle: cy.activite, statut: s.appels[eleve.id] });
       });
     });
@@ -2192,7 +2193,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
     const map = {};
     classe.cycles.forEach((cy) => {
       let n = 0;
-      cy.seances.forEach((s) => { if (s.appels[eleve.id] === "sans_tenue") n++; });
+      (cy.seances || []).forEach((s) => { if (s.appels[eleve.id] === "sans_tenue") n++; });
       map[cy.activite] = n;
     });
     return map;
@@ -2201,7 +2202,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   const retardsParAnnee = useMemo(() => {
     const map = {};
     classe.cycles.forEach((cy) => {
-      cy.seances.forEach((s) => {
+      (cy.seances || []).forEach((s) => {
         const minutes = (s.retards || {})[eleve.id];
         if (!minutes) return;
         const annee = anneeScolaireDe(s.date);
@@ -4903,6 +4904,7 @@ function CyclesScreen({ classes, updateClasse, edt }) {
       dateFin: dateFin || null,
       activite: activitePrincipale,
       activitesParCreneau: activitesParCreneau || {},
+      seances: cycleEnEdition?.seances || [],
     };
     const cycles = cycleEnEdition
       ? classe.cycles.map((c) => (c.id === cycleEnEdition.id ? nouveauCycle : c))
@@ -5752,7 +5754,7 @@ function RecapDispensesScreen({ classes }) {
 function ClasseCycleSheet({ classe }) {
   const [cycleId, setCycleId] = useState(classe.cycles[classe.cycles.length - 1]?.id);
   const cycle = classe.cycles.find((c) => c.id === cycleId) || classe.cycles[classe.cycles.length - 1];
-  const dates = [...cycle.seances].sort((a, b) => a.date.localeCompare(b.date));
+  const dates = [...(cycle.seances || [])].sort((a, b) => a.date.localeCompare(b.date));
   const eleves = [...classe.eleves].sort((a, b) => a.nom.localeCompare(b.nom));
 
   return (
