@@ -8,14 +8,14 @@ import {
   LayoutGrid, Home, RefreshCw, Archive, StickyNote, ThumbsUp, ThumbsDown, Table2, Sun, Moon, ImagePlus,
   Wrench, Timer, Play, Pause, RotateCcw, Flag, Phone, Upload, GraduationCap, Star, Pencil,
   FileText, Image as ImageIcon, Video, Paperclip, FolderPlus, Download, RotateCw, RotateCcw as RotateCcwIcon, Folder,
-  Table, Sigma, ExternalLink, Lock, Globe, Mail, HardDrive, Link2, Search, Clock, GripVertical
+  Table, Sigma, ExternalLink, Lock, Unlock, Globe, Mail, HardDrive, Link2, Search, Clock, GripVertical
 } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.7.0";
+const APP_VERSION = "1.9.1";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -214,6 +214,39 @@ function initials(prenom, nom) {
   return `${(prenom || "?")[0] || ""}${(nom || "?")[0] || ""}`.toUpperCase();
 }
 
+// Ordre d'affichage des élèves d'une classe : alphabétique tant que la classe n'est pas verrouillée.
+// Une fois verrouillée, l'ordre figé (classe.ordreEleves) prime ; tout élève ajouté après le
+// verrouillage (absent de cet ordre figé) est placé à la suite, dans son ordre d'arrivée.
+function elevesOrdonnes(classe) {
+  if (!classe || !classe.eleves) return [];
+  if (!classe.verrouillee || !classe.ordreEleves) {
+    return [...classe.eleves].sort((a, b) => a.nom.localeCompare(b.nom) || (a.prenom || "").localeCompare(b.prenom || ""));
+  }
+  const parOrdre = classe.ordreEleves.map((id) => classe.eleves.find((e) => e.id === id)).filter(Boolean);
+  const idsConnus = new Set(classe.ordreEleves);
+  const nouveaux = classe.eleves.filter((e) => !idsConnus.has(e.id));
+  return [...parOrdre, ...nouveaux];
+}
+
+// Numéro d'ordre d'un élève dans sa classe (01, 02, ...). Non verrouillée : recalculé en direct sur
+// l'ordre alphabétique. Verrouillée : basé sur la position figée dans classe.ordreEleves — un élève
+// supprimé laisse un trou (les autres numéros ne bougent pas) ; un nouvel arrivant est numéroté après
+// tous les emplacements figés (y compris les trous), dans son ordre d'arrivée.
+function numeroEleve(classe, eleveId) {
+  if (!classe) return null;
+  if (!classe.verrouillee || !classe.ordreEleves) {
+    const ordonnes = elevesOrdonnes(classe);
+    const idx = ordonnes.findIndex((e) => e.id === eleveId);
+    return idx === -1 ? null : idx + 1;
+  }
+  const idxFige = classe.ordreEleves.indexOf(eleveId);
+  if (idxFige !== -1) return idxFige + 1;
+  const idsConnus = new Set(classe.ordreEleves);
+  const nouveaux = (classe.eleves || []).filter((e) => !idsConnus.has(e.id));
+  const idxNouveau = nouveaux.findIndex((e) => e.id === eleveId);
+  return idxNouveau === -1 ? null : classe.ordreEleves.length + idxNouveau + 1;
+}
+
 function normaliser(s) {
   return (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 }
@@ -333,22 +366,23 @@ function estDispense(eleve, dateStr) {
   return !!dispenseDuJour(eleve, dateStr);
 }
 
-function Avatar({ eleve, size = 40 }) {
+function Avatar({ eleve, size = 40, numero }) {
+  const contenu = numero != null ? String(numero).padStart(2, "0") : initials(eleve.prenom, eleve.nom);
   return eleve.photo ? (
     <img
       src={eleve.photo}
       alt={`${eleve.prenom} ${eleve.nom}`}
-      style={{ width: size, height: size, borderRadius: 10, objectFit: "cover", border: `1px solid ${LINE}` }}
+      style={{ width: size, height: size, borderRadius: 10, objectFit: "cover", border: `1px solid ${LINE}`, opacity: eleve.inactif ? 0.45 : 1, filter: eleve.inactif ? "grayscale(1)" : "none" }}
     />
   ) : (
     <div
       style={{
-        width: size, height: size, borderRadius: 10, background: PRIMARY_SOFT, color: PRIMARY,
+        width: size, height: size, borderRadius: 10, background: eleve.inactif ? "var(--faint)" : PRIMARY_SOFT, color: eleve.inactif ? "var(--muted-soft)" : PRIMARY,
         display: "flex", alignItems: "center", justifyContent: "center",
         fontWeight: 700, fontSize: size * 0.36, border: `1px solid ${LINE}`,
       }}
     >
-      {initials(eleve.prenom, eleve.nom)}
+      {contenu}
     </div>
   );
 }
@@ -818,6 +852,7 @@ function ClassesScreen({ classes, setClasses, onOpenClass }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 15.5, color: INK, display: "flex", alignItems: "center", gap: 6 }}>
               {c.nom}
+              {c.verrouillee && <Lock size={11} color={ACCENT} title="Ordre verrouillé" />}
               {c.type === "groupe" && <span style={{ fontSize: 10, fontWeight: 700, color: ACCENT, background: ACCENT_SOFT, padding: "2px 7px", borderRadius: 6 }}>Groupe classe</span>}
             </div>
             <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{c.eleves.length} élèves · cycle en cours : {c.cycles[c.cycles.length - 1]?.activite}</div>
@@ -1244,7 +1279,14 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
     updateClasse({ ...classe, eleves: classe.eleves.map((e) => e.id === eleveEnEdition.id ? { ...e, nom, prenom: prenom || "", sousClasseId: sousClasseId || null } : e) });
     setEleveEnEdition(null);
   };
-  const removeEleve = (id) => updateClasse({ ...classe, eleves: classe.eleves.filter((e) => e.id !== id) });
+  const removeEleve = (id) => {
+    if (classe.verrouillee) {
+      updateClasse({ ...classe, eleves: classe.eleves.filter((e) => e.id !== id) });
+    } else {
+      const ordre = elevesOrdonnes(classe).map((e) => e.id);
+      updateClasse({ ...classe, verrouillee: true, ordreEleves: ordre, eleves: classe.eleves.filter((e) => e.id !== id) });
+    }
+  };
 
   const [editionNomGroupe, setEditionNomGroupe] = useState(false);
   const [nomGroupeTmp, setNomGroupeTmp] = useState(classe.nom);
@@ -1317,9 +1359,16 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
     reader.readAsArrayBuffer(file);
   };
 
-  const trie = [...classe.eleves].sort((a, b) => a.nom.localeCompare(b.nom));
+  const trie = elevesOrdonnes(classe);
   const cycleActuel = classe.cycles[classe.cycles.length - 1]?.activite;
   const nomsDelegues = (classe.delegues || []).map((id) => classe.eleves.find((e) => e.id === id)).filter(Boolean).map((e) => `${e.prenom} ${e.nom}`);
+
+  const verrouillerClasse = () => {
+    updateClasse({ ...classe, verrouillee: true, ordreEleves: trie.map((e) => e.id) });
+  };
+  const deverrouillerClasse = () => {
+    updateClasse({ ...classe, verrouillee: false, ordreEleves: null });
+  };
 
   if (printMode) {
     return (
@@ -1366,6 +1415,20 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
           <Pencil size={14} />
         </button>
       </div>
+
+      <button
+        onClick={classe.verrouillee ? deverrouillerClasse : verrouillerClasse}
+        title={classe.verrouillee ? "Déverrouiller l'ordre de la classe" : "Verrouiller l'ordre de la classe"}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 12,
+          padding: "8px 0", borderRadius: 10, border: `1px solid ${classe.verrouillee ? ACCENT : LINE}`,
+          background: classe.verrouillee ? ACCENT_SOFT : CARD, color: classe.verrouillee ? ACCENT : "var(--muted-soft)",
+          fontWeight: 700, fontSize: 12, cursor: "pointer",
+        }}
+      >
+        {classe.verrouillee ? <Lock size={13} /> : <Unlock size={13} />}
+        {classe.verrouillee ? "Ordre de la classe verrouillé — nouveaux élèves en fin de liste" : "Ordre alphabétique (non verrouillé)"}
+      </button>
 
       <div style={{ background: PRIMARY_SOFT, border: `1px solid ${LINE}`, borderRadius: 12, padding: 12, marginBottom: 12, position: "relative" }}>
         <button onClick={() => setInfoOpen(true)} title="Modifier l'encadrement" style={{ position: "absolute", top: 10, right: 10, border: "none", background: "none", color: PRIMARY, cursor: "pointer" }}>
@@ -1554,12 +1617,13 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
         </div>
       )}
 
-      {trie.map((e) => (
-        <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 6px", borderBottom: `1px solid ${LINE}` }}>
+      {trie.map((e, i) => (
+        <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 6px", borderBottom: `1px solid ${LINE}`, opacity: e.inactif ? 0.5 : 1 }}>
           <div onClick={() => onOpenEleve(e.id)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, cursor: "pointer" }}>
-            <Avatar eleve={e} size={34} />
+            <Avatar eleve={e} size={34} numero={numeroEleve(classe, e.id)} />
             <div style={{ fontSize: 14.5, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {e.nom} <span style={{ color: "var(--muted)" }}>{e.prenom}</span>
+              {e.inactif && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--st-absent-c)", marginLeft: 6 }}>· Retiré(e)</span>}
               {e.sexe && <span style={{ fontSize: 10.5, color: "var(--muted-soft)", marginLeft: 6 }}>· {normaliserSexe(e.sexe)}</span>}
               {classe.type === "groupe" && e.sousClasseId && (
                 <span style={{ fontSize: 10.5, color: ACCENT, marginLeft: 6 }}>· {classe.sousClasses.find((s) => s.id === e.sousClasseId)?.nom}</span>
@@ -1654,7 +1718,7 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
   };
 
   const renderEleveTile = (e) => (
-    <div key={e.id} style={{ textAlign: "center" }}>
+    <div key={e.id} style={{ textAlign: "center", opacity: e.inactif ? 0.45 : 1 }}>
       <div style={{ position: "relative" }}>
         <div
           onClick={() => onOpenEleve(classeId, e.id)}
@@ -1662,10 +1726,10 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
           title="Ouvrir la fiche élève"
         >
           {e.photo ? (
-            <img src={e.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={e.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", filter: e.inactif ? "grayscale(1)" : "none" }} />
           ) : (
-            <div style={{ width: "100%", height: "100%", background: PRIMARY_SOFT, color: PRIMARY, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 20 }}>
-              {initials(e.prenom, e.nom)}
+            <div style={{ width: "100%", height: "100%", background: e.inactif ? "var(--faint)" : PRIMARY_SOFT, color: e.inactif ? "var(--muted-soft)" : PRIMARY, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 20 }}>
+              {String(numeroEleve(classe, e.id) ?? "").padStart(2, "0")}
             </div>
           )}
         </div>
@@ -1679,12 +1743,13 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
         </label>
       </div>
       <div onClick={() => onOpenEleve(classeId, e.id)} style={{ fontSize: 11.5, marginTop: 5, fontWeight: 600, color: INK, cursor: "pointer", textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}>{e.prenom}</div>
-      <div style={{ fontSize: 10.5, color: "var(--muted-soft)" }}>{e.nom}</div>
+      <div style={{ fontSize: 10.5, color: "var(--muted-soft)" }}>{e.nom}{e.inactif ? " · Retiré(e)" : ""}</div>
     </div>
   );
 
   const estGroupe = classe?.type === "groupe" && (classe.sousClasses || []).length > 0;
-  const sansSousClasse = estGroupe ? classe.eleves.filter((e) => !e.sousClasseId || !classe.sousClasses.find((s) => s.id === e.sousClasseId)) : [];
+  const ordonnes = elevesOrdonnes(classe);
+  const sansSousClasse = estGroupe ? ordonnes.filter((e) => !e.sousClasseId || !classe.sousClasses.find((s) => s.id === e.sousClasseId)) : [];
 
   return (
     <div style={{ padding: 16 }}>
@@ -1722,7 +1787,7 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
       {estGroupe ? (
         <>
           {classe.sousClasses.map((s) => {
-            const membres = classe.eleves.filter((e) => e.sousClasseId === s.id);
+            const membres = ordonnes.filter((e) => e.sousClasseId === s.id);
             if (membres.length === 0) return null;
             return (
               <div key={s.id} style={{ marginBottom: 18 }}>
@@ -1744,7 +1809,7 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
         </>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 10 }}>
-          {classe?.eleves.map(renderEleveTile)}
+          {ordonnes.map(renderEleveTile)}
         </div>
       )}
     </div>
@@ -1820,7 +1885,7 @@ function RechercheElevesScreen({ classes, onOpenEleve }) {
             onClick={() => onOpenEleve(e.classeId, e.id)}
             style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderBottom: i < resultats.length - 1 ? `1px solid ${LINE}` : "none", cursor: "pointer" }}
           >
-            <Avatar eleve={e} size={34} />
+            <Avatar eleve={e} size={34} numero={numeroEleve(classes.find((c) => c.id === e.classeId), e.id)} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{e.prenom} {e.nom}</div>
               <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>
@@ -1993,10 +2058,11 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
     const dispenseAvecPhoto = dispense && dispenseObj.photos.length > 0;
     const dispBg = dispense ? (dispenseAvecPhoto ? "var(--st-dispense-bg)" : "var(--st-absent-bg)") : "transparent";
     const dispColor = dispense ? (dispenseAvecPhoto ? "var(--st-dispense-c)" : "var(--st-absent-c)") : INK;
+    const inactif = !!e.inactif;
     return (
-      <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 6px", borderBottom: `1px solid ${LINE}`, background: dispBg, borderRadius: dispense ? 8 : 0 }}>
+      <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 6px", borderBottom: `1px solid ${LINE}`, background: dispBg, borderRadius: dispense ? 8 : 0, opacity: inactif ? 0.5 : 1 }}>
         <div onClick={() => onOpenEleve(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
-          <Avatar eleve={e} size={30} />
+          <Avatar eleve={e} size={30} numero={numeroEleve(classe, e.id)} />
           {!dispense && compteST > 0 && (
             <div title={`${compteST} oubli(s) de tenue${perteFinale ? " · -1 pt" : ""}`} style={{
               position: "absolute", bottom: -3, right: -3, minWidth: 15, height: 15, borderRadius: 8, padding: "0 3px",
@@ -2009,11 +2075,15 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
         </div>
         <div
           onClick={() => onOpenEleve(classeId, e.id)}
-          title={dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
+          title={inactif ? "Élève retiré de la classe" : dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
           style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
         >
           {e.prenom} {e.nom}{e.sexe && <span style={{ fontSize: 10.5, fontWeight: 400, color: "var(--muted-soft)" }}> · {normaliserSexe(e.sexe)}</span>}
+          {inactif && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--st-absent-c)" }}> · Retiré(e)</span>}
         </div>
+        {inactif ? (
+          <div style={{ fontSize: 11, color: "var(--muted-soft)", fontStyle: "italic", flexShrink: 0, padding: "0 6px" }}>Retiré(e) de la classe</div>
+        ) : (
         <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
           {Object.entries(STATUTS).map(([key, s]) => {
             const active = statuts[e.id] === key;
@@ -2061,12 +2131,14 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
             </select>
           </div>
         </div>
+        )}
       </div>
     );
   };
 
   const estGroupe = classe.type === "groupe" && (classe.sousClasses || []).length > 0;
-  const sansSousClasse = estGroupe ? classe.eleves.filter((e) => !e.sousClasseId || !classe.sousClasses.find((s) => s.id === e.sousClasseId)) : [];
+  const ordonnesAppel = elevesOrdonnes(classe);
+  const sansSousClasse = estGroupe ? ordonnesAppel.filter((e) => !e.sousClasseId || !classe.sousClasses.find((s) => s.id === e.sousClasseId)) : [];
 
   return (
     <div style={{ padding: "10px 12px", paddingBottom: 90 }}>
@@ -2112,7 +2184,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
       {estGroupe ? (
         <>
           {classe.sousClasses.map((s) => {
-            const membres = classe.eleves.filter((e) => e.sousClasseId === s.id);
+            const membres = ordonnesAppel.filter((e) => e.sousClasseId === s.id);
             if (membres.length === 0) return null;
             return (
               <div key={s.id}>
@@ -2129,7 +2201,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
           )}
         </>
       ) : (
-        classe.eleves.map((e) => renderLigneEleve(e))
+        ordonnesAppel.map((e) => renderLigneEleve(e))
       )}
 
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 58, padding: "10px 16px", background: "linear-gradient(transparent, var(--paper) 30%)" }}>
@@ -2220,6 +2292,8 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   const saveTelP = () => updateEleve({ ...eleve, telephoneParents: telP });
   const toggleAS = () => updateEleve({ ...eleve, estAS: !eleve.estAS });
   const saveActiviteAS = () => updateEleve({ ...eleve, activiteAS });
+
+  const toggleInactifEleve = () => updateEleve({ ...eleve, inactif: !eleve.inactif });
 
   const viderFiche = () => {
     updateEleve({
@@ -2326,7 +2400,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <Avatar eleve={eleve} size={56} />
+        <Avatar eleve={eleve} size={56} numero={numeroEleve(classe, eleve.id)} />
         <div>
           <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 19, color: INK }}>{eleve.prenom} {eleve.nom}</div>
           <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{classe.nom}</div>
@@ -2337,6 +2411,15 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
           )}
         </div>
       </div>
+
+      {eleve.inactif && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "var(--st-absent-bg)", color: "var(--st-absent-c)", borderRadius: 10, padding: "10px 12px", marginBottom: 14, fontSize: 12.5, fontWeight: 600 }}>
+          <span>Élève retiré de la classe — grisé dans l'appel, non compté comme actif.</span>
+          <button onClick={toggleInactifEleve} style={{ border: `1px solid var(--st-absent-c)`, background: "none", color: "var(--st-absent-c)", borderRadius: 8, padding: "5px 10px", fontWeight: 700, fontSize: 11.5, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+            Dégriser
+          </button>
+        </div>
+      )}
 
       {(estDelegue || classe.profPrincipal || classe.cpe) && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
@@ -2465,6 +2548,14 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
           />
         )}
       </div>
+
+      {!eleve.inactif && (
+        <div style={{ marginBottom: 10 }}>
+          <button onClick={toggleInactifEleve} style={{ border: "none", background: "none", color: "var(--st-absent-c)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+            <UserX size={12} /> Retirer cet élève de la classe (sans le supprimer)
+          </button>
+        </div>
+      )}
 
       <div style={{ marginBottom: 20 }}>
         {!confirmationVidage ? (
@@ -5197,7 +5288,7 @@ function EvaluationListScreen({ classes, evaluations, onOpenEvaluation, onCreerE
 function EvaluationEditor({ evaluation, classes, onUpdate, onDelete, biblio, setBiblio, onBack }) {
   const [config, setConfig] = useState(true);
   const classe = classes.find((c) => c.id === evaluation.classeId);
-  const eleves = classe ? [...classe.eleves].sort((a, b) => a.nom.localeCompare(b.nom)) : [];
+  const eleves = elevesOrdonnes(classe);
   const [confirmationDoc, setConfirmationDoc] = useState("");
   const [selectionElevesCible, setSelectionElevesCible] = useState(null); // { ligneId, colId }
 
@@ -5755,7 +5846,7 @@ function ClasseCycleSheet({ classe }) {
   const [cycleId, setCycleId] = useState(classe.cycles[classe.cycles.length - 1]?.id);
   const cycle = classe.cycles.find((c) => c.id === cycleId) || classe.cycles[classe.cycles.length - 1];
   const dates = [...(cycle.seances || [])].sort((a, b) => a.date.localeCompare(b.date));
-  const eleves = [...classe.eleves].sort((a, b) => a.nom.localeCompare(b.nom));
+  const eleves = elevesOrdonnes(classe);
 
   return (
     <div style={{ padding: 16 }}>
