@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.2.1**
+Version actuelle : **1.9.1**
 
 ---
 
@@ -63,6 +63,34 @@ Version actuelle : **1.2.1**
 ---
 
 ## 2. Journal des versions
+
+### v1.9.1 — 05/09/2026
+- La suppression d'un élève **verrouille automatiquement** l'ordre de sa classe si elle ne
+  l'était pas déjà : sa position figée reste un "trou" dans la numérotation (les autres élèves
+  ne sont plus renumérotés). Seul un déverrouillage manuel de la classe relance le calcul en
+  tri alphabétique classique
+
+### v1.9.0 — 05/09/2026
+- Nouveau sur la fiche de classe (Classe/Groupe) : bouton **"Verrouiller / déverrouiller l'ordre
+  de la classe"**. Verrouillée, l'ordre d'affichage (et donc la numérotation 01, 02...) reste figé
+  tel qu'il était au moment du verrouillage ; tout élève ajouté ensuite est placé **en fin de
+  liste**, dans son ordre d'arrivée. Déverrouillée, la classe repasse en tri alphabétique
+  automatique. S'applique partout : appel, trombinoscope, liste de classe, fiche générale du
+  cycle et éditeur d'évaluation. Un petit cadenas apparaît sur la carte de la classe quand elle
+  est verrouillée
+
+### v1.8.0 — 05/09/2026
+- **Correctif** : les cycles créés depuis l'outil "Création de Cycles" ne recevaient pas de
+  tableau `seances`, ce qui faisait planter (page blanche) l'onglet Classes/Appel dès qu'un
+  nouveau cycle sans séance était consulté. Corrigé à la racine et sécurisé partout où les
+  séances d'un cycle sont lues
+- Les **initiales** des élèves (sur l'avatar sans photo) sont remplacées par un **numéro
+  d'ordre** (01, 02...), basé sur le tri alphabétique de la classe — visible dans l'appel,
+  le trombinoscope, la liste de classe, la recherche et la fiche élève
+- Nouveau sur la fiche élève : bouton **"Retirer cet élève de la classe (sans le supprimer)"**.
+  L'élève reste dans la liste, mais sa ligne d'appel est grisée (statuts désactivés) et sa
+  fiche affiche un bandeau "Élève retiré de la classe" avec un bouton **"Dégriser"** pour le
+  réactiver à tout moment
 
 ### v1.7.0 — 04/09/2026
 - Onglet Classe/Groupe (Gestion de classe) : les classes peuvent désormais être
