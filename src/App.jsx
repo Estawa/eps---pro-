@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.10.0";
+const APP_VERSION = "1.10.1";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -3235,6 +3235,7 @@ function BlocNoteScreen({ classes, updateClasse, biblio, setBiblio }) {
   const [medias, setMedias] = useState([]); // [{id, type, data}]
   const [choixOuvert, setChoixOuvert] = useState(false);
   const [titreChoisi, setTitreChoisi] = useState("");
+  const [lierAClasse, setLierAClasse] = useState(true);
   const [classeChoisie, setClasseChoisie] = useState(classes[0]?.id || "");
   const [elevesChoisis, setElevesChoisis] = useState([]);
   const [sauvegarderDansDocs, setSauvegarderDansDocs] = useState(false);
@@ -3266,6 +3267,7 @@ function BlocNoteScreen({ classes, updateClasse, biblio, setBiblio }) {
     setTexte("");
     setMedias([]);
     setTitreChoisi("");
+    setLierAClasse(true);
     setElevesChoisis([]);
     setSauvegarderDansDocs(false);
     setChoixOuvert(false);
@@ -3273,19 +3275,28 @@ function BlocNoteScreen({ classes, updateClasse, biblio, setBiblio }) {
   };
 
   const confirmerSauvegarde = () => {
-    const classe = classes.find((c) => c.id === classeChoisie);
-    if (!classe) return;
-    const note = { id: uid(), date: nowISO(), titre: titreChoisi.trim(), texte, medias, eleveIds: elevesChoisis };
-    updateClasse({ ...classe, blocNotes: [note, ...(classe.blocNotes || [])] });
+    if (lierAClasse) {
+      const classe = classes.find((c) => c.id === classeChoisie);
+      if (!classe) return;
+      const note = { id: uid(), date: nowISO(), titre: titreChoisi.trim(), texte, medias, eleveIds: elevesChoisis };
+      updateClasse({ ...classe, blocNotes: [note, ...(classe.blocNotes || [])] });
 
-    if (sauvegarderDansDocs && setBiblio) {
-      setBiblio((b) => enregistrerBlocNoteDansDocuments(b, classe, note));
+      if (sauvegarderDansDocs && setBiblio) {
+        setBiblio((b) => enregistrerBlocNoteDansDocuments(b, classe, note));
+      }
+
+      const details = [`classe « ${classe.nom} »`];
+      if (elevesChoisis.length > 0) details.push(`${elevesChoisis.length} fiche${elevesChoisis.length > 1 ? "s" : ""} élève`);
+      if (sauvegarderDansDocs) details.push("Documents");
+      setConfirmation(`Note enregistrée — ${details.join(" · ")}.`);
+    } else {
+      // Note non rattachée à une classe : enregistrée uniquement dans Documents.
+      const note = { id: uid(), date: nowISO(), titre: titreChoisi.trim(), texte, medias };
+      if (setBiblio) {
+        setBiblio((b) => enregistrerBlocNoteDansDocuments(b, null, note));
+      }
+      setConfirmation("Note enregistrée dans Documents.");
     }
-
-    const details = [`classe « ${classe.nom} »`];
-    if (elevesChoisis.length > 0) details.push(`${elevesChoisis.length} fiche${elevesChoisis.length > 1 ? "s" : ""} élève`);
-    if (sauvegarderDansDocs) details.push("Documents");
-    setConfirmation(`Note enregistrée — ${details.join(" · ")}.`);
 
     setTexte("");
     setMedias([]);
@@ -3363,33 +3374,58 @@ function BlocNoteScreen({ classes, updateClasse, biblio, setBiblio }) {
             value={titreChoisi}
             onChange={(e) => setTitreChoisi(e.target.value)}
             placeholder="ex : Bilan séance badminton"
-            style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}
+            style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 12, background: CARD, color: INK }}
           />
-          <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 8 }}>Dans quelle classe / groupe classe ?</div>
-          <select value={classeChoisie} onChange={(e) => changerClasse(e.target.value)} style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}>
-            {classes.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
-          </select>
 
-          {classeSelectionnee && classeSelectionnee.eleves.length > 0 && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <button
+              onClick={() => setLierAClasse(true)}
+              style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: `1.5px solid ${lierAClasse ? PRIMARY : LINE}`, background: lierAClasse ? PRIMARY : CARD, color: lierAClasse ? "#fff" : INK, fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
+            >
+              Lier à une classe
+            </button>
+            <button
+              onClick={() => setLierAClasse(false)}
+              style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: `1.5px solid ${!lierAClasse ? PRIMARY : LINE}`, background: !lierAClasse ? PRIMARY : CARD, color: !lierAClasse ? "#fff" : INK, fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
+            >
+              Note libre (Documents uniquement)
+            </button>
+          </div>
+
+          {lierAClasse ? (
             <>
-              <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 6 }}>
-                Associer à des élèves (optionnel) — visible sur leur fiche
-              </div>
-              <div style={{ maxHeight: 160, overflowY: "auto", border: `1px solid ${LINE}`, borderRadius: 9, background: CARD, marginBottom: 10 }}>
-                {elevesOrdonnes(classeSelectionnee).map((e) => (
-                  <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", fontSize: 13, color: INK, borderBottom: `1px solid ${LINE}`, cursor: "pointer" }}>
-                    <input type="checkbox" checked={elevesChoisis.includes(e.id)} onChange={() => toggleEleve(e.id)} />
-                    {e.prenom} {e.nom}
-                  </label>
-                ))}
-              </div>
-            </>
-          )}
+              <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 8 }}>Dans quelle classe / groupe classe ?</div>
+              <select value={classeChoisie} onChange={(e) => changerClasse(e.target.value)} style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}>
+                {classes.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+              </select>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: INK, marginBottom: 14, cursor: "pointer" }}>
-            <input type="checkbox" checked={sauvegarderDansDocs} onChange={(e) => setSauvegarderDansDocs(e.target.checked)} />
-            Enregistrer aussi une copie dans Documents (dossier « Bloc-notes »)
-          </label>
+              {classeSelectionnee && classeSelectionnee.eleves.length > 0 && (
+                <>
+                  <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 6 }}>
+                    Associer à des élèves (optionnel) — visible sur leur fiche
+                  </div>
+                  <div style={{ maxHeight: 160, overflowY: "auto", border: `1px solid ${LINE}`, borderRadius: 9, background: CARD, marginBottom: 10 }}>
+                    {elevesOrdonnes(classeSelectionnee).map((e) => (
+                      <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", fontSize: 13, color: INK, borderBottom: `1px solid ${LINE}`, cursor: "pointer" }}>
+                        <input type="checkbox" checked={elevesChoisis.includes(e.id)} onChange={() => toggleEleve(e.id)} />
+                        {e.prenom} {e.nom}
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: INK, marginBottom: 14, cursor: "pointer" }}>
+                <input type="checkbox" checked={sauvegarderDansDocs} onChange={(e) => setSauvegarderDansDocs(e.target.checked)} />
+                Enregistrer aussi une copie dans Documents (dossier « Bloc-notes »)
+              </label>
+            </>
+          ) : (
+            <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 14 }}>
+              Cette note ne sera liée à aucune classe ni élève : elle sera enregistrée directement dans
+              Documents, dossier « Bloc-notes ».
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setChoixOuvert(false)} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: INK, fontSize: 12.5, cursor: "pointer" }}>Annuler</button>
@@ -3647,13 +3683,16 @@ function ajouterDocDansDossierAuto(biblio, cheminNoms, doc) {
 }
 
 // Génère, à partir d'un bloc-note (texte + médias), les documents à ajouter à la
-// bibliothèque (onglet Documents), rangés dans un dossier "Bloc-notes / <classe>".
+// bibliothèque (onglet Documents). Si une classe est fournie, les documents sont rangés
+// dans un dossier "Bloc-notes / <classe>" et référencent la classe/note d'origine ; sinon
+// (note libre, non rattachée à une classe) ils vont directement dans "Bloc-notes".
 // Un document texte (.txt) est créé si une annotation est saisie, plus un document
 // par photo/vidéo jointe. Chaque document conserve une référence vers le bloc-note
 // d'origine (blocNoteRef) pour pouvoir remonter jusqu'à lui si besoin.
 function enregistrerBlocNoteDansDocuments(biblio, classe, note) {
   const nomBase = (note.titre || "").trim() || `Bloc-note ${fmtDateCourt(note.date ? note.date.slice(0, 10) : todayISO())}`;
-  const chemin = ["Bloc-notes", classe.nom];
+  const chemin = classe ? ["Bloc-notes", classe.nom] : ["Bloc-notes"];
+  const ref = classe ? { classeId: classe.id, noteId: note.id } : { noteId: note.id };
   let b = biblio;
   if ((note.texte || "").trim()) {
     const texteBrut = note.texte.trim();
@@ -3662,7 +3701,7 @@ function enregistrerBlocNoteDansDocuments(biblio, classe, note) {
       id: uid(), nom: nomBase, type: "texte", extension: "TXT",
       data: "data:text/plain;charset=utf-8;base64," + texteBase64,
       contenuTexte: texteBrut, dateAjout: nowISO(),
-      blocNoteRef: { classeId: classe.id, noteId: note.id },
+      blocNoteRef: ref,
     };
     b = ajouterDocDansDossierAuto(b, chemin, docTexte);
   }
@@ -3670,7 +3709,7 @@ function enregistrerBlocNoteDansDocuments(biblio, classe, note) {
     const doc = {
       id: uid(), nom: (note.medias.length > 1 ? `${nomBase} (${i + 1})` : nomBase),
       type: m.type, extension: m.type === "video" ? "MP4" : "JPG", data: m.data, dateAjout: nowISO(),
-      blocNoteRef: { classeId: classe.id, noteId: note.id },
+      blocNoteRef: ref,
     };
     b = ajouterDocDansDossierAuto(b, chemin, doc);
   });
