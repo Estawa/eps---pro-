@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.9.1**
+Version actuelle : **1.9.2**
 
 ---
 
@@ -63,6 +63,18 @@ Version actuelle : **1.9.1**
 ---
 
 ## 2. Journal des versions
+
+### v1.9.2 — 07/09/2026
+- **Correction de bug** : l'activité affichée comme « cycle en cours » dans Gestion de classe
+  (carte de la classe) et sur la fiche classe / fiche élève pouvait être différente de celle
+  affichée dans l'emploi du temps. En cause : ces écrans prenaient le **dernier cycle du
+  tableau** (ordre de création), alors que l'emploi du temps calcule le cycle correspondant à
+  la **date du jour**. Les deux logiques utilisent désormais la même fonction, basée sur les
+  dates de début/fin des cycles
+- Correction associée dans l'écran **Appel** : l'appel se rattache maintenant au cycle dont la
+  période couvre la **date sélectionnée** (et non plus systématiquement au dernier cycle créé),
+  ce qui évite d'enregistrer un appel dans le mauvais cycle en cas de saisie a posteriori ou de
+  cycles créés dans le désordre
 
 ### v1.9.1 — 05/09/2026
 - La suppression d'un élève **verrouille automatiquement** l'ordre de sa classe si elle ne
