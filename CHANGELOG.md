@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.9.2**
+Version actuelle : **1.10.0**
 
 ---
 
@@ -63,6 +63,20 @@ Version actuelle : **1.9.2**
 ---
 
 ## 2. Journal des versions
+
+### v1.10.0 — 07/09/2026
+- **Nouveau depuis l'outil Bloc-note** : possibilité d'associer une note (texte + photos/vidéos)
+  à un ou plusieurs **élèves** de la classe choisie. La note apparaît alors dans une nouvelle
+  section « Bloc-notes » sur la fiche de chaque élève concerné, avec un lien direct vers la note
+  complète
+- **Nouveau** : case à cocher « Enregistrer aussi une copie dans Documents » lors de la création
+  d'un bloc-note. Le texte de l'annotation est sauvegardé comme document texte (.txt), et chaque
+  photo/vidéo comme document séparé, dans un dossier **Bloc-notes / <nom de la classe>** de
+  l'onglet Documents
+- Depuis la fiche d'un bloc-note déjà créé : possibilité de modifier après coup les élèves
+  associés, et bouton pour l'enregistrer dans Documents s'il ne l'avait pas été à la création
+- Le visionneur de documents affiche désormais un aperçu du contenu pour les documents texte
+  (auparavant : « aucun aperçu disponible »)
 
 ### v1.9.2 — 07/09/2026
 - **Correction de bug** : l'activité affichée comme « cycle en cours » dans Gestion de classe
