@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.10.0**
+Version actuelle : **1.10.1**
 
 ---
 
@@ -63,6 +63,11 @@ Version actuelle : **1.10.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.10.1 — 07/09/2026
+- Dans l'outil Bloc-note : le rattachement à une classe n'est plus obligatoire. Un bouton
+  **« Note libre (Documents uniquement) »** permet d'enregistrer la note (texte + photos/vidéos)
+  directement dans Documents (dossier « Bloc-notes »), sans la lier à une classe ni à des élèves
 
 ### v1.10.0 — 07/09/2026
 - **Nouveau depuis l'outil Bloc-note** : possibilité d'associer une note (texte + photos/vidéos)
