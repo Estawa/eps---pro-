@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.9.1";
+const APP_VERSION = "1.9.2";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -855,7 +855,7 @@ function ClassesScreen({ classes, setClasses, onOpenClass }) {
               {c.verrouillee && <Lock size={11} color={ACCENT} title="Ordre verrouillé" />}
               {c.type === "groupe" && <span style={{ fontSize: 10, fontWeight: 700, color: ACCENT, background: ACCENT_SOFT, padding: "2px 7px", borderRadius: 6 }}>Groupe classe</span>}
             </div>
-            <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{c.eleves.length} élèves · cycle en cours : {c.cycles[c.cycles.length - 1]?.activite}</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{c.eleves.length} élèves · cycle en cours : {cycleEnCoursDeClasse(c)?.activite}</div>
           </div>
           <button onClick={(e) => { e.stopPropagation(); removeClasse(c.id); }} style={{ border: "none", background: "none", color: "var(--st-absent-c)", cursor: "pointer", flexShrink: 0 }}>
             <Trash2 size={18} />
@@ -1360,7 +1360,7 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
   };
 
   const trie = elevesOrdonnes(classe);
-  const cycleActuel = classe.cycles[classe.cycles.length - 1]?.activite;
+  const cycleActuel = cycleEnCoursDeClasse(classe)?.activite;
   const nomsDelegues = (classe.delegues || []).map((id) => classe.eleves.find((e) => e.id === id)).filter(Boolean).map((e) => `${e.prenom} ${e.nom}`);
 
   const verrouillerClasse = () => {
@@ -1903,8 +1903,8 @@ function RechercheElevesScreen({ classes, onOpenEleve }) {
 function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio }) {
   const [classeId, setClasseId] = useState(classes[0]?.id);
   const classe = classes.find((c) => c.id === classeId);
-  const cycle = classe?.cycles[classe.cycles.length - 1];
   const [date, setDate] = useState(todayISO());
+  const cycle = cycleEnCoursDeClasse(classe, date);
   const [statuts, setStatuts] = useState({});
   const [retards, setRetards] = useState({});
   const [saved, setSaved] = useState(false);
@@ -2031,13 +2031,14 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   };
 
   const enregistrer = () => {
-    const dernierCycle = classe.cycles[classe.cycles.length - 1];
-    const seancesActuelles = dernierCycle.seances || [];
+    const cycleCible = cycleEnCoursDeClasse(classe, date);
+    if (!cycleCible) return;
+    const seancesActuelles = cycleCible.seances || [];
     const existeDeja = seancesActuelles.some((s) => s.date === date);
     const nouvellesSeances = existeDeja
       ? seancesActuelles.map((s) => s.date === date ? { ...s, appels: statuts, retards } : s)
       : [...seancesActuelles, { id: uid(), date, appels: statuts, retards }];
-    const cycles = classe.cycles.map((c, i) => i === classe.cycles.length - 1 ? { ...c, seances: nouvellesSeances } : c);
+    const cycles = classe.cycles.map((c) => c.id === cycleCible.id ? { ...c, seances: nouvellesSeances } : c);
     updateClasse({ ...classe, cycles });
     setSaved(true);
   };
@@ -2259,7 +2260,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   }, [classe, eleve.id]);
 
   const annotations = useMemo(() => [...(eleve.annotations || [])].sort((a, b) => b.date.localeCompare(a.date)), [eleve.annotations]);
-  const cycleActuel = classe.cycles[classe.cycles.length - 1]?.activite;
+  const cycleActuel = cycleEnCoursDeClasse(classe)?.activite;
 
   const compteParCycle = useMemo(() => {
     const map = {};
@@ -4533,21 +4534,33 @@ function lundiDeLaSemaine(date) {
 // priorité à une activité saisie manuellement sur le créneau, sinon on va chercher
 // le cycle de la classe qui couvre cette date (et, si plusieurs séances/semaine ont
 // des activités différentes, l'activité propre à ce créneau).
+// Détermine le cycle "en cours" d'une classe à une date donnée, en se basant sur les
+// dates de début/fin des cycles (et non sur leur ordre dans le tableau). C'est la même
+// logique que celle utilisée pour l'emploi du temps, afin que "Gestion de la classe" et
+// les fiches élèves affichent toujours la même activité en cours que l'emploi du temps.
+function cycleEnCoursDeClasse(classe, dateISO) {
+  if (!classe) return null;
+  const cycles = [...(classe.cycles || [])].filter((cy) => cy.dateDebut).sort((a, b) => a.dateDebut.localeCompare(b.dateDebut));
+  if (cycles.length === 0) return classe.cycles?.[classe.cycles.length - 1] || null;
+  const date = dateISO || todayISO();
+  let match = null;
+  for (const cy of cycles) {
+    const finOk = !cy.dateFin || date <= cy.dateFin;
+    if (cy.dateDebut <= date && finOk) match = cy;
+  }
+  if (!match) {
+    for (const cy of cycles) if (cy.dateDebut <= date) match = cy;
+  }
+  if (!match) match = cycles[0];
+  return match;
+}
+
 function activiteEffectivePourCreneau(classe, creneau, dateISO) {
   if (!creneau) return "";
   if (creneau.activite && creneau.activite.trim()) return creneau.activite.trim();
   if (!classe) return "";
-  const cycles = [...(classe.cycles || [])].filter((cy) => cy.dateDebut).sort((a, b) => a.dateDebut.localeCompare(b.dateDebut));
-  if (cycles.length === 0) return "";
-  let match = null;
-  for (const cy of cycles) {
-    const finOk = !cy.dateFin || dateISO <= cy.dateFin;
-    if (cy.dateDebut <= dateISO && finOk) match = cy;
-  }
-  if (!match) {
-    for (const cy of cycles) if (cy.dateDebut <= dateISO) match = cy;
-  }
-  if (!match) match = cycles[0];
+  const match = cycleEnCoursDeClasse(classe, dateISO);
+  if (!match) return "";
   if (match.activitesParCreneau && match.activitesParCreneau[creneau.id]) return match.activitesParCreneau[creneau.id];
   return match.activite || "";
 }
