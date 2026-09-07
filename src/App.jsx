@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import {
-  Users, Camera, ClipboardCheck, UserCircle2, Plus, Trash2, ChevronLeft,
+  Users, Camera, ClipboardCheck, UserCircle2, Plus, Trash2, ChevronLeft, ChevronRight,
   Printer, X, Check, HeartPulse, UserX, Shirt, Calendar, FolderOpen,
   LayoutGrid, Home, RefreshCw, Archive, StickyNote, ThumbsUp, ThumbsDown, Table2, Sun, Moon, ImagePlus,
   Wrench, Timer, Play, Pause, RotateCcw, Flag, Phone, Upload, GraduationCap, Star, Pencil,
@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.9.2";
+const APP_VERSION = "1.10.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -2237,7 +2237,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 }
 
 // ---------- Écran : Fiche élève ----------
-function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, biblio, setBiblio }) {
+function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOpenBlocNote, biblio, setBiblio }) {
   const [notes, setNotes] = useState(eleve.notes || "");
   const [telE, setTelE] = useState(eleve.telephoneEleve || "");
   const [telP, setTelP] = useState(eleve.telephoneParents || "");
@@ -2260,6 +2260,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
   }, [classe, eleve.id]);
 
   const annotations = useMemo(() => [...(eleve.annotations || [])].sort((a, b) => b.date.localeCompare(a.date)), [eleve.annotations]);
+  const blocNotesLies = useMemo(() => (classe.blocNotes || []).filter((n) => (n.eleveIds || []).includes(eleve.id)).sort((a, b) => b.date.localeCompare(a.date)), [classe.blocNotes, eleve.id]);
   const cycleActuel = cycleEnCoursDeClasse(classe)?.activite;
 
   const compteParCycle = useMemo(() => {
@@ -2621,6 +2622,23 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, bibl
             <div style={{ fontSize: 13, color: INK }}>{a.texte}</div>
             <div style={{ fontSize: 11, color: "var(--muted-soft)", marginTop: 2 }}>{fmtDateHeure(a.date)}{a.activite ? ` · ${a.activite}` : ""}</div>
           </div>
+        </div>
+      ))}
+
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, marginTop: 20 }}>
+        Bloc-notes
+      </div>
+      {blocNotesLies.length === 0 && <div style={{ fontSize: 13, color: "var(--muted-soft)", marginBottom: 20 }}>Aucun bloc-note associé à cet élève pour le moment.</div>}
+      {blocNotesLies.map((n) => (
+        <div key={n.id} onClick={() => onOpenBlocNote && onOpenBlocNote(n.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: `1px solid ${LINE}`, cursor: onOpenBlocNote ? "pointer" : "default" }}>
+          <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: PRIMARY_SOFT, color: PRIMARY, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <FileText size={13} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{n.titre || n.texte?.slice(0, 60) || "Sans titre"}</div>
+            <div style={{ fontSize: 11, color: "var(--muted-soft)", marginTop: 2 }}>{fmtDateHeure(n.date)}{(n.medias || []).length > 0 ? ` · ${n.medias.length} média${n.medias.length > 1 ? "s" : ""}` : ""}</div>
+          </div>
+          <ChevronRight size={16} color="var(--muted-soft)" />
         </div>
       ))}
 
@@ -3212,13 +3230,26 @@ function ChronoFicheScreen({ classe, fiche, updateClasse, onDeleted }) {
 }
 
 // ---------- Outil : Bloc-note (texte + photo/vidéo, sauvegardé dans une classe) ----------
-function BlocNoteScreen({ classes, updateClasse }) {
+function BlocNoteScreen({ classes, updateClasse, biblio, setBiblio }) {
   const [texte, setTexte] = useState("");
   const [medias, setMedias] = useState([]); // [{id, type, data}]
   const [choixOuvert, setChoixOuvert] = useState(false);
   const [titreChoisi, setTitreChoisi] = useState("");
   const [classeChoisie, setClasseChoisie] = useState(classes[0]?.id || "");
+  const [elevesChoisis, setElevesChoisis] = useState([]);
+  const [sauvegarderDansDocs, setSauvegarderDansDocs] = useState(false);
   const [confirmation, setConfirmation] = useState("");
+
+  const classeSelectionnee = classes.find((c) => c.id === classeChoisie);
+
+  const changerClasse = (id) => {
+    setClasseChoisie(id);
+    setElevesChoisis([]);
+  };
+
+  const toggleEleve = (id) => {
+    setElevesChoisis((arr) => (arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]));
+  };
 
   const ajouterMedias = (files) => {
     Array.from(files).forEach((file) => {
@@ -3235,6 +3266,8 @@ function BlocNoteScreen({ classes, updateClasse }) {
     setTexte("");
     setMedias([]);
     setTitreChoisi("");
+    setElevesChoisis([]);
+    setSauvegarderDansDocs(false);
     setChoixOuvert(false);
     setConfirmation("");
   };
@@ -3242,12 +3275,23 @@ function BlocNoteScreen({ classes, updateClasse }) {
   const confirmerSauvegarde = () => {
     const classe = classes.find((c) => c.id === classeChoisie);
     if (!classe) return;
-    const note = { id: uid(), date: nowISO(), titre: titreChoisi.trim(), texte, medias };
+    const note = { id: uid(), date: nowISO(), titre: titreChoisi.trim(), texte, medias, eleveIds: elevesChoisis };
     updateClasse({ ...classe, blocNotes: [note, ...(classe.blocNotes || [])] });
-    setConfirmation(`Note enregistrée dans « ${classe.nom} ».`);
+
+    if (sauvegarderDansDocs && setBiblio) {
+      setBiblio((b) => enregistrerBlocNoteDansDocuments(b, classe, note));
+    }
+
+    const details = [`classe « ${classe.nom} »`];
+    if (elevesChoisis.length > 0) details.push(`${elevesChoisis.length} fiche${elevesChoisis.length > 1 ? "s" : ""} élève`);
+    if (sauvegarderDansDocs) details.push("Documents");
+    setConfirmation(`Note enregistrée — ${details.join(" · ")}.`);
+
     setTexte("");
     setMedias([]);
     setTitreChoisi("");
+    setElevesChoisis([]);
+    setSauvegarderDansDocs(false);
     setChoixOuvert(false);
   };
 
@@ -3322,9 +3366,31 @@ function BlocNoteScreen({ classes, updateClasse }) {
             style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}
           />
           <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 8 }}>Dans quelle classe / groupe classe ?</div>
-          <select value={classeChoisie} onChange={(e) => setClasseChoisie(e.target.value)} style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}>
+          <select value={classeChoisie} onChange={(e) => changerClasse(e.target.value)} style={{ width: "100%", padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13.5, marginBottom: 10, background: CARD, color: INK }}>
             {classes.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
           </select>
+
+          {classeSelectionnee && classeSelectionnee.eleves.length > 0 && (
+            <>
+              <div style={{ fontSize: 12, color: INK, fontWeight: 600, marginBottom: 6 }}>
+                Associer à des élèves (optionnel) — visible sur leur fiche
+              </div>
+              <div style={{ maxHeight: 160, overflowY: "auto", border: `1px solid ${LINE}`, borderRadius: 9, background: CARD, marginBottom: 10 }}>
+                {elevesOrdonnes(classeSelectionnee).map((e) => (
+                  <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", fontSize: 13, color: INK, borderBottom: `1px solid ${LINE}`, cursor: "pointer" }}>
+                    <input type="checkbox" checked={elevesChoisis.includes(e.id)} onChange={() => toggleEleve(e.id)} />
+                    {e.prenom} {e.nom}
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: INK, marginBottom: 14, cursor: "pointer" }}>
+            <input type="checkbox" checked={sauvegarderDansDocs} onChange={(e) => setSauvegarderDansDocs(e.target.checked)} />
+            Enregistrer aussi une copie dans Documents (dossier « Bloc-notes »)
+          </label>
+
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setChoixOuvert(false)} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: INK, fontSize: 12.5, cursor: "pointer" }}>Annuler</button>
             <button onClick={confirmerSauvegarde} style={{ flex: 2, padding: "9px 0", borderRadius: 9, border: "none", background: PRIMARY, color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>Enregistrer la note</button>
@@ -3336,9 +3402,10 @@ function BlocNoteScreen({ classes, updateClasse }) {
 }
 
 // ---------- Écran : Bloc-note sauvegardé (consultation + édition) ----------
-function BlocNoteFicheScreen({ classe, note, updateClasse, onDeleted }) {
+function BlocNoteFicheScreen({ classe, note, updateClasse, onDeleted, biblio, setBiblio }) {
   const [texte, setTexte] = useState(note.texte || "");
   const [titre, setTitre] = useState(note.titre || "");
+  const eleveIds = note.eleveIds || [];
 
   const majNote = (patch) => {
     updateClasse({ ...classe, blocNotes: classe.blocNotes.map((n) => n.id === note.id ? { ...n, ...patch } : n) });
@@ -3348,6 +3415,13 @@ function BlocNoteFicheScreen({ classe, note, updateClasse, onDeleted }) {
     if (!confirm("Supprimer définitivement cette note ?")) return;
     updateClasse({ ...classe, blocNotes: classe.blocNotes.filter((n) => n.id !== note.id) });
     onDeleted();
+  };
+  const toggleEleve = (id) => {
+    majNote({ eleveIds: eleveIds.includes(id) ? eleveIds.filter((x) => x !== id) : [...eleveIds, id] });
+  };
+  const enregistrerDansDocs = () => {
+    setBiblio((b) => enregistrerBlocNoteDansDocuments(b, classe, { ...note, texte, titre }));
+    majNote({ enregistreDansDocs: true });
   };
 
   return (
@@ -3379,7 +3453,7 @@ function BlocNoteFicheScreen({ classe, note, updateClasse, onDeleted }) {
       />
 
       {(note.medias || []).length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8, marginBottom: 18 }}>
           {note.medias.map((m) => (
             <div key={m.id} style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: CARD, border: `1px solid ${LINE}` }}>
               {m.type === "video" ? (
@@ -3393,6 +3467,33 @@ function BlocNoteFicheScreen({ classe, note, updateClasse, onDeleted }) {
             </div>
           ))}
         </div>
+      )}
+
+      {classe.eleves.length > 0 && (
+        <>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+            Élèves associés — visible sur leur fiche
+          </div>
+          <div style={{ maxHeight: 180, overflowY: "auto", border: `1px solid ${LINE}`, borderRadius: 9, background: CARD, marginBottom: 18 }}>
+            {elevesOrdonnes(classe).map((e) => (
+              <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", fontSize: 13, color: INK, borderBottom: `1px solid ${LINE}`, cursor: "pointer" }}>
+                <input type="checkbox" checked={eleveIds.includes(e.id)} onChange={() => toggleEleve(e.id)} />
+                {e.prenom} {e.nom}
+              </label>
+            ))}
+          </div>
+        </>
+      )}
+
+      {note.enregistreDansDocs ? (
+        <div style={{ fontSize: 12.5, color: PRIMARY, fontWeight: 600, textAlign: "center" }}>✓ Enregistrée dans Documents</div>
+      ) : (
+        <button
+          onClick={enregistrerDansDocs}
+          style={{ width: "100%", padding: "12px 0", borderRadius: 12, border: `1.5px dashed ${PRIMARY}`, background: "none", color: PRIMARY, fontWeight: 700, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+        >
+          <Paperclip size={15} /> Enregistrer une copie dans Documents
+        </button>
       )}
     </div>
   );
@@ -3543,6 +3644,37 @@ function ajouterDocDansDossierAuto(biblio, cheminNoms, doc) {
   if (idx === -1) dossiers = [...dossiers, dossier];
   else dossiers[idx] = dossier;
   return { ...biblio, dossiers };
+}
+
+// Génère, à partir d'un bloc-note (texte + médias), les documents à ajouter à la
+// bibliothèque (onglet Documents), rangés dans un dossier "Bloc-notes / <classe>".
+// Un document texte (.txt) est créé si une annotation est saisie, plus un document
+// par photo/vidéo jointe. Chaque document conserve une référence vers le bloc-note
+// d'origine (blocNoteRef) pour pouvoir remonter jusqu'à lui si besoin.
+function enregistrerBlocNoteDansDocuments(biblio, classe, note) {
+  const nomBase = (note.titre || "").trim() || `Bloc-note ${fmtDateCourt(note.date ? note.date.slice(0, 10) : todayISO())}`;
+  const chemin = ["Bloc-notes", classe.nom];
+  let b = biblio;
+  if ((note.texte || "").trim()) {
+    const texteBrut = note.texte.trim();
+    const texteBase64 = btoa(unescape(encodeURIComponent(texteBrut)));
+    const docTexte = {
+      id: uid(), nom: nomBase, type: "texte", extension: "TXT",
+      data: "data:text/plain;charset=utf-8;base64," + texteBase64,
+      contenuTexte: texteBrut, dateAjout: nowISO(),
+      blocNoteRef: { classeId: classe.id, noteId: note.id },
+    };
+    b = ajouterDocDansDossierAuto(b, chemin, docTexte);
+  }
+  (note.medias || []).forEach((m, i) => {
+    const doc = {
+      id: uid(), nom: (note.medias.length > 1 ? `${nomBase} (${i + 1})` : nomBase),
+      type: m.type, extension: m.type === "video" ? "MP4" : "JPG", data: m.data, dateAjout: nowISO(),
+      blocNoteRef: { classeId: classe.id, noteId: note.id },
+    };
+    b = ajouterDocDansDossierAuto(b, chemin, doc);
+  });
+  return b;
 }
 
 function retirerDocParId(node, docId) {
@@ -3928,6 +4060,7 @@ function DocumentViewerModal({ doc, onClose }) {
   const estPdf = doc.extension === "PDF";
   const estTableur = EXTENSIONS_TABLEUR.includes(doc.extension);
   const estVideo = doc.type === "video";
+  const estTexte = doc.type === "texte";
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 70, display: "flex", flexDirection: "column" }} onClick={onClose}>
@@ -3943,6 +4076,11 @@ function DocumentViewerModal({ doc, onClose }) {
           )}
           {estVideo && (
             <video src={doc.data} controls style={{ width: "100%", borderRadius: 8 }} />
+          )}
+          {estTexte && (
+            <div style={{ background: "#fff", borderRadius: 8, border: `1px solid ${LINE}`, padding: 14, whiteSpace: "pre-wrap", fontSize: 13.5, color: INK, lineHeight: 1.5 }}>
+              {doc.contenuTexte}
+            </div>
           )}
           {estPdf && urlPdf && (
             <iframe src={urlPdf} title={doc.nom} style={{ width: "100%", height: "65vh", border: "none", borderRadius: 8, background: "#fff" }} />
@@ -3972,7 +4110,7 @@ function DocumentViewerModal({ doc, onClose }) {
           {estTableur && !feuille && !erreurTableur && (
             <div style={{ color: "var(--muted-soft)", fontSize: 13, textAlign: "center", padding: 30 }}>Chargement de l'aperçu…</div>
           )}
-          {(erreurTableur || (!estImage && !estVideo && !estPdf && !estTableur)) && (
+          {(erreurTableur || (!estImage && !estVideo && !estPdf && !estTableur && !estTexte)) && (
             <div style={{ color: "var(--muted-soft)", fontSize: 13, textAlign: "center", padding: 30 }}>
               Aucun aperçu disponible pour ce type de fichier ({doc.extension || "?"}).<br />Utilisez « Ouvrir » ou « Télécharger » ci-dessous.
             </div>
@@ -6242,7 +6380,7 @@ export default function EpsPro() {
     const c = classes.find((x) => x.id === current.params.classeId);
     const e = c.eleves.find((x) => x.id === current.params.eleveId);
     title = "Fiche élève";
-    body = <FicheEleve classe={c} eleve={e} updateEleve={(patch) => updateEleveIn(c.id, e.id, patch)} updateClasse={updateClasse} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} biblio={biblio} setBiblio={setBiblio} />;
+    body = <FicheEleve classe={c} eleve={e} updateEleve={(patch) => updateEleveIn(c.id, e.id, patch)} updateClasse={updateClasse} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} biblio={biblio} setBiblio={setBiblio} />;
   } else if (current?.screen === "ficheCycle") {
     const c = classes.find((x) => x.id === current.params.classeId);
     title = `Fiche générale — ${c.nom}`;
@@ -6256,7 +6394,7 @@ export default function EpsPro() {
     const c = classes.find((x) => x.id === current.params.classeId);
     const n = (c.blocNotes || []).find((x) => x.id === current.params.noteId);
     title = "Bloc-note";
-    body = <BlocNoteFicheScreen classe={c} note={n} updateClasse={updateClasse} onDeleted={pop} />;
+    body = <BlocNoteFicheScreen classe={c} note={n} updateClasse={updateClasse} onDeleted={pop} biblio={biblio} setBiblio={setBiblio} />;
   } else if (current?.screen === "recapDispenses") {
     title = "Récapitulatif des dispenses";
     body = <RecapDispensesScreen classes={classes} />;
@@ -6287,7 +6425,7 @@ export default function EpsPro() {
     title = current.params.id === "minuteur" ? "Minuteur" : current.params.id === "chrono" ? "Chronomètre" : "Bloc-note";
     body = current.params.id === "minuteur" ? <MinuteurScreen />
       : current.params.id === "chrono" ? <ChronoScreen classes={classes} updateClasse={updateClasse} />
-      : <BlocNoteScreen classes={classes} updateClasse={updateClasse} />;
+      : <BlocNoteScreen classes={classes} updateClasse={updateClasse} biblio={biblio} setBiblio={setBiblio} />;
   } else {
     switch (tab) {
       case "accueil": title = "Accueil"; body = <Accueil classes={classes} edt={edt} setEdt={setEdt} etablissement={etablissement} onOpenEdt={() => push("edt", {})} />; break;
