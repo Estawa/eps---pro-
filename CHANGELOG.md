@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.13.0**
+Version actuelle : **1.13.1**
 
 ---
 
@@ -63,6 +63,10 @@ Version actuelle : **1.13.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.13.1 — 08/09/2026
+- Correction : sens du glissement sur la fiche élève inversé — vers la gauche = élève suivant,
+  vers la droite = élève précédent
 
 ### v1.13.0 — 08/09/2026
 - **Fiche élève** : navigation directe vers l'élève suivant/précédent de la liste d'appel de la
