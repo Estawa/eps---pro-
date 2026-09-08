@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.10.1";
+const APP_VERSION = "1.11.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -442,7 +442,7 @@ const PALETTE_CLASSES = [
   { bg: "#FFEAEA", bd: "#F5A8A2", tx: "#C23A32" },
 ];
 
-function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt }) {
+function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt, onOpenAppel }) {
   const totalEleves = classes.reduce((s, c) => s + c.eleves.length, 0);
   const aujourdhui = new Date();
   const jourAujourdhui = JOUR_JS_VERS_CLE[aujourdhui.getDay()];
@@ -584,10 +584,14 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt }) {
                     return (
                       <td key={j.key} style={{ padding: 0, verticalAlign: "top", minWidth: 80, borderRadius: 10, background: !c && estAujourdhui ? PRIMARY_SOFT : "transparent" }}>
                         {c ? (
-                          <div style={{
-                            background: couleur.bg, border: `1.5px solid ${couleur.bd}`, borderRadius: 10,
-                            padding: "6px 6px", textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                          }}>
+                          <div
+                            onClick={c.classeId ? () => onOpenAppel(c.classeId, isoSemaine[i]) : undefined}
+                            style={{
+                              background: couleur.bg, border: `1.5px solid ${couleur.bd}`, borderRadius: 10,
+                              padding: "6px 6px", textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                              cursor: c.classeId ? "pointer" : "default",
+                            }}
+                          >
                             <div style={{ fontWeight: 700, color: couleur.tx, fontSize: 11 }}>{c.classeId ? nomClasse(c.classeId) : (c.titre || "")}</div>
                             <div style={{ color: couleur.tx, opacity: 0.75, fontSize: 9.5 }}>{c.heureFin ? `–${c.heureFin}` : ""}</div>
                             {c.classeId && activiteEffective && <div style={{ color: couleur.tx, fontWeight: 600, fontSize: 9.5, marginTop: 1 }}>{activiteEffective}</div>}
@@ -629,7 +633,7 @@ function QuickTile({ Icon, label, onClick, tone }) {
 }
 
 // ---------- Écran : Gestion de classe (regroupe Classe/Groupe, Appel, Trombi) ----------
-function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio }) {
+function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, appelPreselection, onAppelPreselectionConsumed }) {
   const sousOnglets = [
     { key: "appel", label: "Appel" },
     { key: "classes", label: "Classe/Groupe" },
@@ -654,7 +658,7 @@ function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, u
         ))}
       </div>
       {sousOnglet === "classes" && <ClassesScreen classes={classes} setClasses={setClasses} onOpenClass={onOpenClass} />}
-      {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} />}
+      {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} preselection={appelPreselection} onPreselectionConsumed={onAppelPreselectionConsumed} />}
       {sousOnglet === "trombi" && <TrombiScreen classes={classes} updateEleve={updateEleve} updateClasse={updateClasse} onOpenEleve={onOpenEleve} />}
       {sousOnglet === "recherche" && <RechercheElevesScreen classes={classes} onOpenEleve={onOpenEleve} />}
     </div>
@@ -1900,10 +1904,18 @@ function RechercheElevesScreen({ classes, onOpenEleve }) {
 }
 
 // ---------- Écran : Appel ----------
-function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio }) {
-  const [classeId, setClasseId] = useState(classes[0]?.id);
+function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, preselection, onPreselectionConsumed }) {
+  const [classeId, setClasseId] = useState(preselection?.classeId || classes[0]?.id);
   const classe = classes.find((c) => c.id === classeId);
-  const [date, setDate] = useState(todayISO());
+  const [date, setDate] = useState(preselection?.date || todayISO());
+
+  React.useEffect(() => {
+    if (!preselection) return;
+    if (preselection.classeId) setClasseId(preselection.classeId);
+    if (preselection.date) setDate(preselection.date);
+    onPreselectionConsumed && onPreselectionConsumed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preselection]);
   const cycle = cycleEnCoursDeClasse(classe, date);
   const [statuts, setStatuts] = useState({});
   const [retards, setRetards] = useState({});
@@ -6262,6 +6274,7 @@ export default function EpsPro() {
   const [tab, setTab] = useState("accueil");
   const [sousOngletGestion, setSousOngletGestion] = useState("appel");
   const [nav, setNav] = useState([]); // pile d'écrans secondaires
+  const [appelPreselection, setAppelPreselection] = useState(null); // { classeId, date } depuis un clic sur l'EDT
   const [annotCible, setAnnotCible] = useState(null); // { classeId, eleveId, activite }
   const [theme, setTheme] = useState("clair");
   const [lockPhoto, setLockPhoto] = useState(null);
@@ -6409,6 +6422,13 @@ export default function EpsPro() {
 
   const goto = (t) => { setTab(t); setNav([]); };
 
+  const ouvrirAppelDepuisEdt = (classeId, date) => {
+    setAppelPreselection({ classeId, date });
+    setSousOngletGestion("appel");
+    setTab("gestion");
+    setNav([]);
+  };
+
   let body;
   let title = "";
   if (current?.screen === "classeDetail") {
@@ -6467,8 +6487,8 @@ export default function EpsPro() {
       : <BlocNoteScreen classes={classes} updateClasse={updateClasse} biblio={biblio} setBiblio={setBiblio} />;
   } else {
     switch (tab) {
-      case "accueil": title = "Accueil"; body = <Accueil classes={classes} edt={edt} setEdt={setEdt} etablissement={etablissement} onOpenEdt={() => push("edt", {})} />; break;
-      case "gestion": title = "Gestion de classe"; body = <GestionClasseScreen sousOnglet={sousOngletGestion} setSousOnglet={setSousOngletGestion} classes={classes} setClasses={setClasses} updateClasse={updateClasse} updateEleve={updateEleveIn} onOpenClass={(id) => push("classeDetail", { id })} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} />; break;
+      case "accueil": title = "Accueil"; body = <Accueil classes={classes} edt={edt} setEdt={setEdt} etablissement={etablissement} onOpenEdt={() => push("edt", {})} onOpenAppel={ouvrirAppelDepuisEdt} />; break;
+      case "gestion": title = "Gestion de classe"; body = <GestionClasseScreen sousOnglet={sousOngletGestion} setSousOnglet={setSousOngletGestion} classes={classes} setClasses={setClasses} updateClasse={updateClasse} updateEleve={updateEleveIn} onOpenClass={(id) => push("classeDetail", { id })} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} appelPreselection={appelPreselection} onAppelPreselectionConsumed={() => setAppelPreselection(null)} />; break;
       case "documents": title = "Documents"; body = <DocumentsScreen biblio={biblio} setBiblio={setBiblio} onSupprimerPhotoDeDispense={supprimerPhotoDeDispense} onOpenRecapDispenses={() => push("recapDispenses", {})} onOpenEvaluations={() => push("evaluations", {})} onOpenEvaluation={(id) => push("evaluationEditor", { id })} />; break;
       case "outils": title = "Outils"; body = <OutilsScreen onOpenOutil={(id) => push("outil", { id })} onOpenEvaluations={() => push("evaluations", {})} onOpenEdt={() => push("edt", {})} onOpenAssistantRentree={() => push("assistantRentree", {})} onOpenChangerPin={() => push("changerPin", {})} />; break;
       case "liens": title = "Liens"; body = (
