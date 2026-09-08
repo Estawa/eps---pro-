@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.13.0";
+const APP_VERSION = "1.13.1";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -2280,7 +2280,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eleve.id]);
 
-  // Navigation par glissement : vers la droite = élève suivant, vers la gauche = élève précédent.
+  // Navigation par glissement : vers la gauche = élève suivant, vers la droite = élève précédent.
   const swipeRef = useRef(null);
   const onTouchStartFiche = (e) => {
     const t = e.touches[0];
@@ -2293,8 +2293,8 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
     const dy = t.clientY - swipeRef.current.y;
     swipeRef.current = null;
     if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
-    if (dx > 0 && onEleveSuivant) onEleveSuivant();
-    else if (dx < 0 && onElevePrecedent) onElevePrecedent();
+    if (dx < 0 && onEleveSuivant) onEleveSuivant();
+    else if (dx > 0 && onElevePrecedent) onElevePrecedent();
   };
 
   const historique = useMemo(() => {
