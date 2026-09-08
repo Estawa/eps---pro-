@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.10.1**
+Version actuelle : **1.11.0**
 
 ---
 
@@ -63,6 +63,12 @@ Version actuelle : **1.10.1**
 ---
 
 ## 2. Journal des versions
+
+### v1.11.0 — 08/09/2026
+- **Nouveau** : sur la page d'accueil, un clic sur un créneau de l'emploi du temps (dès lors
+  qu'une classe/groupe classe lui est associé) ouvre directement la fiche d'appel de cette
+  classe pour le jour correspondant, sans passer par la sélection manuelle dans l'onglet
+  « Gestion de classe »
 
 ### v1.10.1 — 07/09/2026
 - Dans l'outil Bloc-note : le rattachement à une classe n'est plus obligatoire. Un bouton
