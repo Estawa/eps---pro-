@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.12.0";
+const APP_VERSION = "1.13.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -2249,7 +2249,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 }
 
 // ---------- Écran : Fiche élève ----------
-function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOpenBlocNote, biblio, setBiblio }) {
+function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOpenBlocNote, biblio, setBiblio, onEleveSuivant, onElevePrecedent, positionFiche }) {
   const [notes, setNotes] = useState(eleve.notes || "");
   const [telE, setTelE] = useState(eleve.telephoneEleve || "");
   const [telP, setTelP] = useState(eleve.telephoneParents || "");
@@ -2262,6 +2262,40 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
   const [photoEnEditionDispense, setPhotoEnEditionDispense] = useState(null); // { dispenseId }
   const [impressionDispenses, setImpressionDispenses] = useState(null); // array de dispenses à imprimer
   const [confirmationVidage, setConfirmationVidage] = useState(false);
+
+  // Réinitialise les champs locaux quand on change d'élève (navigation suivant/précédent),
+  // le composant restant monté d'un élève à l'autre.
+  React.useEffect(() => {
+    setNotes(eleve.notes || "");
+    setTelE(eleve.telephoneEleve || "");
+    setTelP(eleve.telephoneParents || "");
+    setActiviteAS(eleve.activiteAS || "");
+    setPrenomE(eleve.prenom || "");
+    setNomE(eleve.nom || "");
+    setFormDispenseOuvert(false);
+    setDispenseEnEdition(null);
+    setPhotoEnEditionDispense(null);
+    setImpressionDispenses(null);
+    setConfirmationVidage(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eleve.id]);
+
+  // Navigation par glissement : vers la droite = élève suivant, vers la gauche = élève précédent.
+  const swipeRef = useRef(null);
+  const onTouchStartFiche = (e) => {
+    const t = e.touches[0];
+    swipeRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEndFiche = (e) => {
+    if (!swipeRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeRef.current.x;
+    const dy = t.clientY - swipeRef.current.y;
+    swipeRef.current = null;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+    if (dx > 0 && onEleveSuivant) onEleveSuivant();
+    else if (dx < 0 && onElevePrecedent) onElevePrecedent();
+  };
 
   const historique = useMemo(() => {
     const lignes = [];
@@ -2417,7 +2451,28 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
   }
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 16 }} onTouchStart={onTouchStartFiche} onTouchEnd={onTouchEndFiche}>
+      {(onEleveSuivant || onElevePrecedent) && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <button
+            onClick={onElevePrecedent || undefined}
+            disabled={!onElevePrecedent}
+            style={{ display: "flex", alignItems: "center", gap: 3, border: `1px solid ${LINE}`, background: CARD, color: onElevePrecedent ? PRIMARY : "var(--faint)", borderRadius: 8, padding: "5px 9px", fontSize: 11.5, fontWeight: 700, cursor: onElevePrecedent ? "pointer" : "default" }}
+          >
+            <ChevronLeft size={13} /> Précédent
+          </button>
+          {positionFiche && (
+            <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>{positionFiche.index + 1} / {positionFiche.total}</div>
+          )}
+          <button
+            onClick={onEleveSuivant || undefined}
+            disabled={!onEleveSuivant}
+            style={{ display: "flex", alignItems: "center", gap: 3, border: `1px solid ${LINE}`, background: CARD, color: onEleveSuivant ? PRIMARY : "var(--faint)", borderRadius: 8, padding: "5px 9px", fontSize: 11.5, fontWeight: 700, cursor: onEleveSuivant ? "pointer" : "default" }}
+          >
+            Suivant <ChevronRight size={13} />
+          </button>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
         <Avatar eleve={eleve} size={56} numero={numeroEleve(classe, eleve.id)} />
         <div style={{ flex: 1 }}>
@@ -6459,6 +6514,15 @@ export default function EpsPro() {
     setNav([]);
   };
 
+  const allerVersEleve = (eleveId) => {
+    setNav((prev) => {
+      if (prev.length === 0) return prev;
+      const copie = [...prev];
+      copie[copie.length - 1] = { ...copie[copie.length - 1], params: { ...copie[copie.length - 1].params, eleveId } };
+      return copie;
+    });
+  };
+
   let body;
   let title = "";
   if (current?.screen === "classeDetail") {
@@ -6468,8 +6532,12 @@ export default function EpsPro() {
   } else if (current?.screen === "fiche") {
     const c = classes.find((x) => x.id === current.params.classeId);
     const e = c.eleves.find((x) => x.id === current.params.eleveId);
+    const ordonnesFiche = elevesOrdonnes(c);
+    const idxFiche = ordonnesFiche.findIndex((x) => x.id === e.id);
+    const eleveSuivant = idxFiche >= 0 ? ordonnesFiche[idxFiche + 1] : null;
+    const elevePrecedent = idxFiche > 0 ? ordonnesFiche[idxFiche - 1] : null;
     title = "Fiche élève";
-    body = <FicheEleve classe={c} eleve={e} updateEleve={(patch) => updateEleveIn(c.id, e.id, patch)} updateClasse={updateClasse} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} biblio={biblio} setBiblio={setBiblio} />;
+    body = <FicheEleve classe={c} eleve={e} updateEleve={(patch) => updateEleveIn(c.id, e.id, patch)} updateClasse={updateClasse} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} biblio={biblio} setBiblio={setBiblio} onEleveSuivant={eleveSuivant ? () => allerVersEleve(eleveSuivant.id) : null} onElevePrecedent={elevePrecedent ? () => allerVersEleve(elevePrecedent.id) : null} positionFiche={idxFiche >= 0 ? { index: idxFiche, total: ordonnesFiche.length } : null} />;
   } else if (current?.screen === "ficheCycle") {
     const c = classes.find((x) => x.id === current.params.classeId);
     title = `Fiche générale — ${c.nom}`;
