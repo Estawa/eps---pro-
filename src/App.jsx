@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.11.0";
+const APP_VERSION = "1.12.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -2254,6 +2254,8 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
   const [telE, setTelE] = useState(eleve.telephoneEleve || "");
   const [telP, setTelP] = useState(eleve.telephoneParents || "");
   const [activiteAS, setActiviteAS] = useState(eleve.activiteAS || "");
+  const [prenomE, setPrenomE] = useState(eleve.prenom || "");
+  const [nomE, setNomE] = useState(eleve.nom || "");
   const estDelegue = (classe.delegues || []).includes(eleve.id);
   const [formDispenseOuvert, setFormDispenseOuvert] = useState(false);
   const [dispenseEnEdition, setDispenseEnEdition] = useState(null);
@@ -2304,6 +2306,9 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
   const saveNotes = () => updateEleve({ ...eleve, notes });
   const saveTelE = () => updateEleve({ ...eleve, telephoneEleve: telE });
   const saveTelP = () => updateEleve({ ...eleve, telephoneParents: telP });
+  const savePrenom = () => updateEleve({ ...eleve, prenom: prenomE.trim() || eleve.prenom });
+  const saveNom = () => updateEleve({ ...eleve, nom: nomE.trim() || eleve.nom });
+  const setSexe = (val) => updateEleve({ ...eleve, sexe: eleve.sexe === val ? "" : val });
   const toggleAS = () => updateEleve({ ...eleve, estAS: !eleve.estAS });
   const saveActiviteAS = () => updateEleve({ ...eleve, activiteAS });
 
@@ -2413,18 +2418,43 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
 
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
         <Avatar eleve={eleve} size={56} numero={numeroEleve(classe, eleve.id)} />
-        <div>
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 19, color: INK }}>{eleve.prenom} {eleve.nom}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
+            <input
+              value={prenomE}
+              onChange={(e) => setPrenomE(e.target.value)}
+              onBlur={savePrenom}
+              placeholder="Prénom"
+              style={{ fontFamily: "'Oswald', sans-serif", fontSize: 16, color: INK, border: `1px solid ${LINE}`, borderRadius: 7, padding: "4px 8px", background: CARD, width: 110 }}
+            />
+            <input
+              value={nomE}
+              onChange={(e) => setNomE(e.target.value)}
+              onBlur={saveNom}
+              placeholder="Nom"
+              style={{ fontFamily: "'Oswald', sans-serif", fontSize: 16, color: INK, border: `1px solid ${LINE}`, borderRadius: 7, padding: "4px 8px", background: CARD, width: 110 }}
+            />
+          </div>
           <div style={{ fontSize: 12.5, color: "var(--muted-soft)" }}>{classe.nom}</div>
-          {(eleve.classe || eleve.sexe || eleve.dateNaissance) && (
+          {(eleve.classe || eleve.dateNaissance) && (
             <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginTop: 2 }}>
-              {[eleve.classe, eleve.sexe ? normaliserSexe(eleve.sexe) : null, eleve.dateNaissance ? `né(e) le ${eleve.dateNaissance}` : null].filter(Boolean).join(" · ")}
+              {[eleve.classe, eleve.dateNaissance ? `né(e) le ${eleve.dateNaissance}` : null].filter(Boolean).join(" · ")}
             </div>
           )}
         </div>
       </div>
+
+      <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13, color: INK }}>
+          <input type="checkbox" checked={eleve.sexe === "M"} onChange={() => setSexe("M")} /> Garçon
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13, color: INK }}>
+          <input type="checkbox" checked={eleve.sexe === "F"} onChange={() => setSexe("F")} /> Fille
+        </label>
+      </div>
+
 
       {eleve.inactif && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "var(--st-absent-bg)", color: "var(--st-absent-c)", borderRadius: 10, padding: "10px 12px", marginBottom: 14, fontSize: 12.5, fontWeight: 600 }}>
