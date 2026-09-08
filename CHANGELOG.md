@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.11.0**
+Version actuelle : **1.12.0**
 
 ---
 
@@ -63,6 +63,15 @@ Version actuelle : **1.11.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.12.0 — 08/09/2026
+- **Fiche élève** : le prénom et le nom sont désormais directement modifiables en haut de la
+  fiche (champs de saisie), et le sexe se coche via deux cases « Garçon » / « Fille » (cocher
+  l'une décoche automatiquement l'autre)
+- Le sélecteur de classe d'origine (au sein d'un groupe classe) était déjà présent sur la fiche
+  élève et reste inchangé
+- Ces informations (prénom, nom, sexe, classe d'origine) se répercutent immédiatement sur la
+  fiche d'appel (nom affiché, regroupement par classe d'origine pour les groupes classe)
 
 ### v1.11.0 — 08/09/2026
 - **Nouveau** : sur la page d'accueil, un clic sur un créneau de l'emploi du temps (dès lors
