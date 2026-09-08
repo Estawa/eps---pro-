@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.12.0**
+Version actuelle : **1.13.0**
 
 ---
 
@@ -63,6 +63,12 @@ Version actuelle : **1.12.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.13.0 — 08/09/2026
+- **Fiche élève** : navigation directe vers l'élève suivant/précédent de la liste d'appel de la
+  classe, sans repasser par la liste — en glissant la page vers la droite (suivant) ou vers la
+  gauche (précédent), ou via les boutons « Précédent / Suivant » désormais affichés en haut de la
+  fiche (avec la position dans la liste, ex. « 5 / 28 »)
 
 ### v1.12.0 — 08/09/2026
 - **Fiche élève** : le prénom et le nom sont désormais directement modifiables en haut de la
