@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import {
-  Users, Camera, ClipboardCheck, UserCircle2, Plus, Trash2, ChevronLeft, ChevronRight,
+  Users, Camera, ClipboardCheck, UserCircle2, Plus, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
   Printer, X, Check, HeartPulse, UserX, Shirt, Calendar, FolderOpen,
   LayoutGrid, Home, RefreshCw, Archive, StickyNote, ThumbsUp, ThumbsDown, Table2, Sun, Moon, ImagePlus,
   Wrench, Timer, Play, Pause, RotateCcw, Flag, Phone, Upload, GraduationCap, Star, Pencil,
@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.13.1";
+const APP_VERSION = "1.14.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -1212,7 +1212,7 @@ function ImportListeElevesModal({ classe, onClose, onValider }) {
   );
 }
 
-function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChrono, onOpenBlocNote, evaluations, onOpenEvaluation }) {
+function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChrono, onOpenBlocNote, evaluations, onOpenEvaluation, edt }) {
   const [printMode, setPrintMode] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [importMsg, setImportMsg] = useState("");
@@ -1367,6 +1367,13 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
   const cycleActuel = cycleEnCoursDeClasse(classe)?.activite;
   const nomsDelegues = (classe.delegues || []).map((id) => classe.eleves.find((e) => e.id === id)).filter(Boolean).map((e) => `${e.prenom} ${e.nom}`);
 
+  const labelCreneauClasse = (c) => `${JOURS.find((j) => j.key === c.jour)?.label || c.jour} ${c.heureDebut}–${c.heureFin}`;
+  const creneauxClasseCycles = [...(edt?.creneaux || [])]
+    .filter((c) => c.classeId === classe.id)
+    .sort((a, b) => (JOURS.findIndex((j) => j.key === a.jour) - JOURS.findIndex((j) => j.key === b.jour)) || heureEnMinutes(a.heureDebut) - heureEnMinutes(b.heureDebut));
+  const cyclesRecap = [...(classe.cycles || [])].filter((c) => c.dateDebut).sort((a, b) => a.dateDebut.localeCompare(b.dateDebut));
+  const [recapOuvert, setRecapOuvert] = useState(true);
+
   const verrouillerClasse = () => {
     updateClasse({ ...classe, verrouillee: true, ordreEleves: trie.map((e) => e.id) });
   };
@@ -1447,6 +1454,56 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
         <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, color: INK }}>
           <Star size={14} color={PRIMARY} /> Délégués : <b>{nomsDelegues.length ? nomsDelegues.join(", ") : "non renseigné"}</b>
         </div>
+      </div>
+
+      <div style={{ border: `1px solid ${LINE}`, borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
+        <button
+          onClick={() => setRecapOuvert((o) => !o)}
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", border: "none", background: CARD, cursor: "pointer" }}
+        >
+          <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: INK }}>
+            <Table2 size={14} color={PRIMARY} /> Cycles de l'année {cycleActuel ? `(en cours : ${cycleActuel})` : ""}
+          </span>
+          {recapOuvert ? <ChevronUp size={15} color={PRIMARY} /> : <ChevronDown size={15} color={PRIMARY} />}
+        </button>
+        {recapOuvert && (
+          cyclesRecap.length === 0 ? (
+            <div style={{ fontSize: 12, color: "var(--muted-soft)", padding: "10px 12px" }}>Aucun cycle programmé pour cette classe.</div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", fontSize: 11, color: "var(--muted-soft)", padding: "6px 12px", borderTop: `1px solid ${LINE}` }}>Début</th>
+                  <th style={{ textAlign: "left", fontSize: 11, color: "var(--muted-soft)", padding: "6px 12px", borderTop: `1px solid ${LINE}` }}>Fin</th>
+                  <th style={{ textAlign: "left", fontSize: 11, color: "var(--muted-soft)", padding: "6px 12px", borderTop: `1px solid ${LINE}` }}>Activité</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cyclesRecap.map((cy) => {
+                  const activitesDistinctes = creneauxClasseCycles.length > 1 && cy.activitesParCreneau && Object.keys(cy.activitesParCreneau).length > 0;
+                  return (
+                    <tr key={cy.id} style={{ borderTop: `1px solid ${LINE}` }}>
+                      <td style={{ padding: "7px 12px", fontSize: 12, color: INK, verticalAlign: "top", whiteSpace: "nowrap" }}>{fmtDateCourt(cy.dateDebut)}</td>
+                      <td style={{ padding: "7px 12px", fontSize: 12, color: INK, verticalAlign: "top", whiteSpace: "nowrap" }}>{cy.dateFin ? fmtDateCourt(cy.dateFin) : "—"}</td>
+                      <td style={{ padding: "7px 12px", fontSize: 12, color: INK, verticalAlign: "top" }}>
+                        {activitesDistinctes ? (
+                          creneauxClasseCycles.map((cr) => (
+                            <div key={cr.id} style={{ marginBottom: 2 }}>
+                              <span style={{ color: "var(--muted-soft)" }}>{labelCreneauClasse(cr)} : </span>
+                              <b>{cy.activitesParCreneau[cr.id] || cy.activite || "—"}</b>
+                            </div>
+                          ))
+                        ) : (
+                          <b>{cy.activite || "—"}</b>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )
+        )}
       </div>
 
       <div style={{ background: classe.type === "groupe" ? ACCENT_SOFT : "none", border: classe.type === "groupe" ? `1px solid ${ACCENT}` : `1px dashed ${LINE}`, borderRadius: 12, padding: 12, marginBottom: 14 }}>
@@ -6528,7 +6585,7 @@ export default function EpsPro() {
   if (current?.screen === "classeDetail") {
     const c = classes.find((x) => x.id === current.params.id);
     title = c.nom;
-    body = <ClasseDetail classe={c} updateClasse={updateClasse} onOpenEleve={(eid) => push("fiche", { classeId: c.id, eleveId: eid })} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenChrono={(chronoId) => push("chronoFiche", { classeId: c.id, chronoId })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} evaluations={evaluations} onOpenEvaluation={(id) => push("evaluationEditor", { id })} />;
+    body = <ClasseDetail classe={c} updateClasse={updateClasse} onOpenEleve={(eid) => push("fiche", { classeId: c.id, eleveId: eid })} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenChrono={(chronoId) => push("chronoFiche", { classeId: c.id, chronoId })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} evaluations={evaluations} onOpenEvaluation={(id) => push("evaluationEditor", { id })} edt={edt} />;
   } else if (current?.screen === "fiche") {
     const c = classes.find((x) => x.id === current.params.classeId);
     const e = c.eleves.find((x) => x.id === current.params.eleveId);
