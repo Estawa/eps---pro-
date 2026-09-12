@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.13.1**
+Version actuelle : **1.14.0**
 
 ---
 
@@ -63,6 +63,15 @@ Version actuelle : **1.13.1**
 ---
 
 ## 2. Journal des versions
+
+### v1.14.0 — 12/09/2026
+- **Fiche classe / groupe classe** (onglet « Classes ») : nouveau récapitulatif pliable des
+  cycles de l'année sous forme de tableau (Début / Fin / Activité), juste sous l'encadrement
+  (prof principal / CPE / délégués)
+- Pour une classe/groupe classe ayant plusieurs séances par semaine avec des activités
+  différentes par créneau, chaque créneau et son activité sont détaillés dans la cellule
+  « Activité » de la ligne du cycle correspondant
+- Le cycle en cours est rappelé dans l'en-tête du récapitulatif
 
 ### v1.13.1 — 08/09/2026
 - Correction : sens du glissement sur la fiche élève inversé — vers la gauche = élève suivant,
