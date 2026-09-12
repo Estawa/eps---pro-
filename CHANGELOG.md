@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.14.0**
+Version actuelle : **1.15.0**
 
 ---
 
@@ -63,6 +63,17 @@ Version actuelle : **1.14.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.15.0 — 12/09/2026
+- **Correction** : le glissé vers le bas ne recharge plus l'application (le geste natif du
+  navigateur/PWA était responsable de retours intempestifs à l'écran de code)
+- **Nouveau** : le code d'accès n'est plus redemandé lors d'un retour dans l'application après
+  être passé sur une autre appli (tant que l'application n'est pas totalement fermée) ; l'écran
+  sur lequel on se trouvait est également conservé
+- **Fiche classe / groupe classe** : navigation directe vers la classe/groupe suivant(e) ou
+  précédent(e) en glissant la page vers la gauche (suivant) ou la droite (précédent), ou via les
+  boutons « Précédent / Suivant » désormais affichés en haut de la fiche (avec la position dans
+  la liste, ex. « 2 / 9 ») — identique au fonctionnement déjà en place sur la fiche élève
 
 ### v1.14.0 — 12/09/2026
 - **Fiche classe / groupe classe** (onglet « Classes ») : nouveau récapitulatif pliable des
