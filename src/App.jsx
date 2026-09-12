@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.14.0";
+const APP_VERSION = "1.15.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -1212,7 +1212,7 @@ function ImportListeElevesModal({ classe, onClose, onValider }) {
   );
 }
 
-function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChrono, onOpenBlocNote, evaluations, onOpenEvaluation, edt }) {
+function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChrono, onOpenBlocNote, evaluations, onOpenEvaluation, edt, onClasseSuivante, onClassePrecedente, positionClasse }) {
   const [printMode, setPrintMode] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [importMsg, setImportMsg] = useState("");
@@ -1222,6 +1222,23 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
   const [renommageOuvert, setRenommageOuvert] = useState(false);
   const [importListeOuvert, setImportListeOuvert] = useState(false);
   const [confirmationVideClasse, setConfirmationVideClasse] = useState(false);
+
+  // Navigation par glissement : vers la gauche = classe/groupe suivant, vers la droite = précédent.
+  const swipeRefClasse = useRef(null);
+  const onTouchStartClasse = (e) => {
+    const t = e.touches[0];
+    swipeRefClasse.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEndClasse = (e) => {
+    if (!swipeRefClasse.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeRefClasse.current.x;
+    const dy = t.clientY - swipeRefClasse.current.y;
+    swipeRefClasse.current = null;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+    if (dx < 0 && onClasseSuivante) onClasseSuivante();
+    else if (dx > 0 && onClassePrecedente) onClassePrecedente();
+  };
 
   const viderClasse = () => {
     updateClasse({ ...classe, eleves: [] });
@@ -1417,7 +1434,30 @@ function ClasseDetail({ classe, updateClasse, onOpenEleve, onAnnotate, onOpenChr
   }
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 16 }} onTouchStart={onTouchStartClasse} onTouchEnd={onTouchEndClasse}>
+      {(onClasseSuivante || onClassePrecedente) && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <button
+            onClick={onClassePrecedente || undefined}
+            disabled={!onClassePrecedente}
+            title="Classe/groupe précédent"
+            style={{ display: "flex", alignItems: "center", gap: 3, border: `1px solid ${LINE}`, background: CARD, color: onClassePrecedente ? PRIMARY : "var(--faint)", borderRadius: 8, padding: "5px 9px", fontSize: 11.5, fontWeight: 700, cursor: onClassePrecedente ? "pointer" : "default" }}
+          >
+            <ChevronLeft size={13} /> Précédent
+          </button>
+          {positionClasse && (
+            <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>{positionClasse.index + 1} / {positionClasse.total}</div>
+          )}
+          <button
+            onClick={onClasseSuivante || undefined}
+            disabled={!onClasseSuivante}
+            title="Classe/groupe suivant"
+            style={{ display: "flex", alignItems: "center", gap: 3, border: `1px solid ${LINE}`, background: CARD, color: onClasseSuivante ? PRIMARY : "var(--faint)", borderRadius: 8, padding: "5px 9px", fontSize: 11.5, fontWeight: 700, cursor: onClasseSuivante ? "pointer" : "default" }}
+          >
+            Suivant <ChevronRight size={13} />
+          </button>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
         <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 18, color: INK, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {classe.nom}
@@ -6411,11 +6451,14 @@ function LockScreen({ onUnlock, lockPhoto, onChangePhoto, theme, onToggleTheme, 
 
 // ---------- App racine ----------
 export default function EpsPro() {
-  const [locked, setLocked] = useState(true);
+  // Le déverrouillage et la position de navigation sont conservés dans sessionStorage :
+  // ainsi, un rechargement intempestif (glissé accidentel, reprise après mise en arrière-plan)
+  // ne renvoie pas sur l'écran de code et ne fait pas perdre l'écran en cours.
+  const [locked, setLocked] = useState(() => sessionStorage.getItem("eps_pro_unlocked") !== "true");
   const [classes, setClasses] = useState(seedClasses());
-  const [tab, setTab] = useState("accueil");
-  const [sousOngletGestion, setSousOngletGestion] = useState("appel");
-  const [nav, setNav] = useState([]); // pile d'écrans secondaires
+  const [tab, setTab] = useState(() => sessionStorage.getItem("eps_pro_tab") || "accueil");
+  const [sousOngletGestion, setSousOngletGestion] = useState(() => sessionStorage.getItem("eps_pro_sousOnglet") || "appel");
+  const [nav, setNav] = useState([]); // pile d'écrans secondaires — restaurée depuis sessionStorage une fois les données chargées (cf. effet ci-dessous)
   const [appelPreselection, setAppelPreselection] = useState(null); // { classeId, date } depuis un clic sur l'EDT
   const [annotCible, setAnnotCible] = useState(null); // { classeId, eleveId, activite }
   const [theme, setTheme] = useState("clair");
@@ -6440,6 +6483,10 @@ export default function EpsPro() {
   const [pret, setPret] = useState(false);
   const [codeProf, setCodeProf] = useState("");
   const [statutSync, setStatutSync] = useState("local"); // 'local' | 'synced' | 'syncing'
+
+  React.useEffect(() => { sessionStorage.setItem("eps_pro_tab", tab); }, [tab]);
+  React.useEffect(() => { sessionStorage.setItem("eps_pro_sousOnglet", sousOngletGestion); }, [sousOngletGestion]);
+  React.useEffect(() => { sessionStorage.setItem("eps_pro_nav", JSON.stringify(nav)); }, [nav]);
 
   React.useEffect(() => {
     let annule = false;
@@ -6473,6 +6520,23 @@ export default function EpsPro() {
       if (valeurs.liensPerso) setLiensPerso(valeurs.liensPerso);
       setCodeProf(code);
       setStatutSync(code ? "synced" : "local");
+
+      // Restaure l'écran où l'on se trouvait avant un rechargement intempestif, seulement si les
+      // classes/groupes qu'il référence existent bien dans les données qui viennent d'être chargées
+      // (sinon on resterait bloqué sur un écran cassé).
+      try {
+        const classesChargees = valeurs.classes || [];
+        const brutNav = sessionStorage.getItem("eps_pro_nav");
+        const pileNav = brutNav ? JSON.parse(brutNav) : [];
+        const pileValide = Array.isArray(pileNav) && pileNav.length > 0 && pileNav.every((ecran) => {
+          const cid = ecran?.params?.classeId || ecran?.params?.id;
+          return !cid || classesChargees.some((c) => c.id === cid);
+        });
+        if (pileValide) setNav(pileNav);
+      } catch {
+        // pile de navigation illisible : on repart simplement de l'accueil.
+      }
+
       setPret(true);
     })();
     return () => { annule = true; };
@@ -6571,6 +6635,15 @@ export default function EpsPro() {
     setNav([]);
   };
 
+  const allerVersClasse = (classeId) => {
+    setNav((prev) => {
+      if (prev.length === 0) return prev;
+      const copie = [...prev];
+      copie[copie.length - 1] = { ...copie[copie.length - 1], params: { ...copie[copie.length - 1].params, id: classeId } };
+      return copie;
+    });
+  };
+
   const allerVersEleve = (eleveId) => {
     setNav((prev) => {
       if (prev.length === 0) return prev;
@@ -6584,8 +6657,11 @@ export default function EpsPro() {
   let title = "";
   if (current?.screen === "classeDetail") {
     const c = classes.find((x) => x.id === current.params.id);
+    const idxClasse = classes.findIndex((x) => x.id === c.id);
+    const classeSuivante = idxClasse >= 0 ? classes[idxClasse + 1] : null;
+    const classePrecedente = idxClasse > 0 ? classes[idxClasse - 1] : null;
     title = c.nom;
-    body = <ClasseDetail classe={c} updateClasse={updateClasse} onOpenEleve={(eid) => push("fiche", { classeId: c.id, eleveId: eid })} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenChrono={(chronoId) => push("chronoFiche", { classeId: c.id, chronoId })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} evaluations={evaluations} onOpenEvaluation={(id) => push("evaluationEditor", { id })} edt={edt} />;
+    body = <ClasseDetail classe={c} updateClasse={updateClasse} onOpenEleve={(eid) => push("fiche", { classeId: c.id, eleveId: eid })} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenChrono={(chronoId) => push("chronoFiche", { classeId: c.id, chronoId })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} evaluations={evaluations} onOpenEvaluation={(id) => push("evaluationEditor", { id })} edt={edt} onClasseSuivante={classeSuivante ? () => allerVersClasse(classeSuivante.id) : null} onClassePrecedente={classePrecedente ? () => allerVersClasse(classePrecedente.id) : null} positionClasse={idxClasse >= 0 ? { index: idxClasse, total: classes.length } : null} />;
   } else if (current?.screen === "fiche") {
     const c = classes.find((x) => x.id === current.params.classeId);
     const e = c.eleves.find((x) => x.id === current.params.eleveId);
@@ -6694,7 +6770,7 @@ export default function EpsPro() {
           <div style={{ fontSize: 12, opacity: 0.8 }}>Chargement de tes données…</div>
         </div>
       ) : locked ? (
-        <LockScreen onUnlock={() => setLocked(false)} lockPhoto={lockPhoto} onChangePhoto={setLockPhoto} theme={theme} onToggleTheme={toggleTheme} pinAttendu={pinAcces} />
+        <LockScreen onUnlock={() => { sessionStorage.setItem("eps_pro_unlocked", "true"); setLocked(false); }} lockPhoto={lockPhoto} onChangePhoto={setLockPhoto} theme={theme} onToggleTheme={toggleTheme} pinAttendu={pinAcces} />
       ) : (
         <div className="eps-shell" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
           <nav className="eps-side-nav">
