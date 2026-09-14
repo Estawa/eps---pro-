@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.15.0**
+Version actuelle : **1.16.0**
 
 ---
 
@@ -63,6 +63,11 @@ Version actuelle : **1.15.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.16.0 — 14/09/2026
+- **Fiche élève** : nouveau bouton « Déplacer vers une autre classe / groupe classe » — change la
+  classe/groupe de l'élève en conservant sa fiche complète (id, photo, notes, annotations,
+  dispenses, historique d'appel), au lieu de devoir le supprimer puis le recréer ailleurs
 
 ### v1.15.0 — 12/09/2026
 - **Correction** : le glissé vers le bas ne recharge plus l'application (le geste natif du
