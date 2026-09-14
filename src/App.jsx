@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.15.0";
+const APP_VERSION = "1.16.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -2346,7 +2346,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 }
 
 // ---------- Écran : Fiche élève ----------
-function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOpenBlocNote, biblio, setBiblio, onEleveSuivant, onElevePrecedent, positionFiche }) {
+function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibles, onDeplacerEleve, onAnnotate, onOpenBlocNote, biblio, setBiblio, onEleveSuivant, onElevePrecedent, positionFiche }) {
   const [notes, setNotes] = useState(eleve.notes || "");
   const [telE, setTelE] = useState(eleve.telephoneEleve || "");
   const [telP, setTelP] = useState(eleve.telephoneParents || "");
@@ -2359,6 +2359,8 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
   const [photoEnEditionDispense, setPhotoEnEditionDispense] = useState(null); // { dispenseId }
   const [impressionDispenses, setImpressionDispenses] = useState(null); // array de dispenses à imprimer
   const [confirmationVidage, setConfirmationVidage] = useState(false);
+  const [deplacementOuvert, setDeplacementOuvert] = useState(false);
+  const [classeCibleDeplacement, setClasseCibleDeplacement] = useState("");
 
   // Réinitialise les champs locaux quand on change d'élève (navigation suivant/précédent),
   // le composant restant monté d'un élève à l'autre.
@@ -2750,6 +2752,48 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, onAnnotate, onOp
           <button onClick={toggleInactifEleve} style={{ border: "none", background: "none", color: "var(--st-absent-c)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
             <UserX size={12} /> Retirer cet élève de la classe (sans le supprimer)
           </button>
+        </div>
+      )}
+
+      {onDeplacerEleve && (
+        <div style={{ marginBottom: 20 }}>
+          {!deplacementOuvert ? (
+            <button onClick={() => setDeplacementOuvert(true)} style={{ border: "none", background: "none", color: PRIMARY, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+              <RefreshCw size={12} /> Déplacer vers une autre classe / groupe classe
+            </button>
+          ) : (
+            <div style={{ border: `1px solid ${LINE}`, background: CARD, borderRadius: 10, padding: 10 }}>
+              <div style={{ fontSize: 12, color: "var(--muted-soft)", marginBottom: 8 }}>
+                Actuellement dans <strong style={{ color: INK }}>{classe.nom}</strong>. Sa photo, ses notes,
+                annotations, dispenses et son historique d'appel le suivent, où qu'il aille.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <select
+                  value={classeCibleDeplacement}
+                  onChange={(e) => setClasseCibleDeplacement(e.target.value)}
+                  style={{ flex: 1, padding: 9, borderRadius: 9, border: `1px solid ${LINE}`, fontSize: 13, background: CARD, color: INK }}
+                >
+                  <option value="">Choisir une classe...</option>
+                  {(classesDisponibles || []).filter((c) => c.id !== classe.id).map((c) => (
+                    <option key={c.id} value={c.id}>{c.nom}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => { if (classeCibleDeplacement) onDeplacerEleve(classeCibleDeplacement); }}
+                  disabled={!classeCibleDeplacement}
+                  style={{ padding: "9px 14px", borderRadius: 9, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 12.5, cursor: classeCibleDeplacement ? "pointer" : "default", opacity: classeCibleDeplacement ? 1 : 0.5 }}
+                >
+                  Déplacer
+                </button>
+                <button
+                  onClick={() => { setDeplacementOuvert(false); setClasseCibleDeplacement(""); }}
+                  style={{ padding: "9px 12px", borderRadius: 9, border: `1px solid ${LINE}`, background: CARD, color: "var(--muted-soft)", fontSize: 12.5, cursor: "pointer" }}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -6597,6 +6641,23 @@ export default function EpsPro() {
     setClasses(classes.map((c) => c.id !== classeId ? c : { ...c, eleves: c.eleves.map((e) => e.id === eleveId ? { ...e, ...patch } : e) }));
   };
 
+  // Déplace un élève d'une classe/groupe classe vers une autre en conservant sa fiche complète
+  // (id, photo, notes, annotations, dispenses, historique d'appel) — seul moyen sûr de le
+  // transférer ; le supprimer puis le recréer dans la classe cible casserait ce lien.
+  const deplacerEleveVersClasse = (classeSourceId, eleveId, classeCibleId) => {
+    if (!classeCibleId || classeCibleId === classeSourceId) return;
+    setClasses((cs) => {
+      const source = cs.find((c) => c.id === classeSourceId);
+      const eleve = source && source.eleves.find((e) => e.id === eleveId);
+      if (!eleve) return cs;
+      return cs.map((c) => {
+        if (c.id === classeSourceId) return { ...c, eleves: c.eleves.filter((e) => e.id !== eleveId) };
+        if (c.id === classeCibleId) return { ...c, eleves: [...c.eleves, eleve] };
+        return c;
+      });
+    });
+  };
+
   const ajouterAnnotation = (texte, type) => {
     if (!annotCible) return;
     const { classeId, eleveId } = annotCible;
@@ -6670,7 +6731,7 @@ export default function EpsPro() {
     const eleveSuivant = idxFiche >= 0 ? ordonnesFiche[idxFiche + 1] : null;
     const elevePrecedent = idxFiche > 0 ? ordonnesFiche[idxFiche - 1] : null;
     title = "Fiche élève";
-    body = <FicheEleve classe={c} eleve={e} updateEleve={(patch) => updateEleveIn(c.id, e.id, patch)} updateClasse={updateClasse} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} biblio={biblio} setBiblio={setBiblio} onEleveSuivant={eleveSuivant ? () => allerVersEleve(eleveSuivant.id) : null} onElevePrecedent={elevePrecedent ? () => allerVersEleve(elevePrecedent.id) : null} positionFiche={idxFiche >= 0 ? { index: idxFiche, total: ordonnesFiche.length } : null} />;
+    body = <FicheEleve classe={c} eleve={e} updateEleve={(patch) => updateEleveIn(c.id, e.id, patch)} updateClasse={updateClasse} classesDisponibles={classes} onDeplacerEleve={(classeCibleId) => { deplacerEleveVersClasse(c.id, e.id, classeCibleId); pop(); }} onAnnotate={(eid, activite) => setAnnotCible({ classeId: c.id, eleveId: eid, activite })} onOpenBlocNote={(noteId) => push("blocNoteFiche", { classeId: c.id, noteId })} biblio={biblio} setBiblio={setBiblio} onEleveSuivant={eleveSuivant ? () => allerVersEleve(eleveSuivant.id) : null} onElevePrecedent={elevePrecedent ? () => allerVersEleve(elevePrecedent.id) : null} positionFiche={idxFiche >= 0 ? { index: idxFiche, total: ordonnesFiche.length } : null} />;
   } else if (current?.screen === "ficheCycle") {
     const c = classes.find((x) => x.id === current.params.classeId);
     title = `Fiche générale — ${c.nom}`;
