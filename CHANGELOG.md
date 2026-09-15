@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.16.0**
+Version actuelle : **1.17.0**
 
 ---
 
@@ -26,7 +26,10 @@ Version actuelle : **1.16.0**
 - Import d'une liste d'appel complète (Excel/CSV/ODS) avec mapping des colonnes et aperçu avant validation
 - Appel avec statuts Présent / Sans tenue / Dispensé / Absent, compteur d'oublis de tenue par cycle
 - Gestion des dispenses (ponctuelles ou par période), avec photo de justificatif dupliquée dans Documents
-- Annotations rapides horodatées (positif/négatif), contextualisées à l'activité du cycle en cours
+- Annotations rapides horodatées (positif/négatif), contextualisées à l'activité du cycle en
+  cours ; chacune peut être annulée (reste visible, marquée « Annulée », réactivable) ou
+  supprimée définitivement, à tout moment, quelle que soit la date à laquelle elle a été
+  enregistrée
 - Fiche générale d'appel par classe, consultable par cycle
 
 ### Emploi du temps (onglet Outils)
@@ -63,6 +66,12 @@ Version actuelle : **1.16.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.17.0 — 15/09/2026
+- **Fiche élève** : chaque annotation rapide (positif/négatif) propose désormais deux actions
+  distinctes — « Annuler » (l'annotation reste visible dans l'historique, affichée barrée et
+  marquée « Annulée », réactivable en un clic) et « Supprimer » (suppression définitive, avec
+  confirmation) — utilisables à tout moment, même sur une annotation enregistrée un autre jour
 
 ### v1.16.0 — 14/09/2026
 - **Fiche élève** : nouveau bouton « Déplacer vers une autre classe / groupe classe » — change la
