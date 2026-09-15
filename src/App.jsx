@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.16.0";
+const APP_VERSION = "1.17.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -2445,6 +2445,25 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibl
   const toggleAS = () => updateEleve({ ...eleve, estAS: !eleve.estAS });
   const saveActiviteAS = () => updateEleve({ ...eleve, activiteAS });
 
+  const annulerAnnotation = (annotationId) => {
+    updateEleve({
+      annotations: (eleve.annotations || []).map((a) =>
+        a.id !== annotationId ? a : { ...a, annulee: true, dateAnnulation: nowISO() }
+      ),
+    });
+  };
+  const reactiverAnnotation = (annotationId) => {
+    updateEleve({
+      annotations: (eleve.annotations || []).map((a) =>
+        a.id !== annotationId ? a : { ...a, annulee: false, dateAnnulation: null }
+      ),
+    });
+  };
+  const supprimerAnnotation = (annotationId) => {
+    if (!confirm("Supprimer définitivement cette annotation ?")) return;
+    updateEleve({ annotations: (eleve.annotations || []).filter((a) => a.id !== annotationId) });
+  };
+
   const toggleInactifEleve = () => updateEleve({ ...eleve, inactif: !eleve.inactif });
 
   const viderFiche = () => {
@@ -2852,13 +2871,30 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibl
       </div>
       {annotations.length === 0 && <div style={{ fontSize: 13, color: "var(--muted-soft)", marginBottom: 20 }}>Aucune annotation pour le moment.</div>}
       {annotations.map((a) => (
-        <div key={a.id} style={{ display: "flex", gap: 10, padding: "9px 0", borderBottom: `1px solid ${LINE}` }}>
+        <div key={a.id} style={{ display: "flex", gap: 10, padding: "9px 0", borderBottom: `1px solid ${LINE}`, opacity: a.annulee ? 0.55 : 1 }}>
           <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.type === "positif" ? "var(--st-present-bg)" : "var(--st-absent-bg)", color: a.type === "positif" ? "var(--st-present-c)" : "var(--st-absent-c)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {a.type === "positif" ? <ThumbsUp size={13} /> : <ThumbsDown size={13} />}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: INK }}>{a.texte}</div>
-            <div style={{ fontSize: 11, color: "var(--muted-soft)", marginTop: 2 }}>{fmtDateHeure(a.date)}{a.activite ? ` · ${a.activite}` : ""}</div>
+            <div style={{ fontSize: 13, color: INK, textDecoration: a.annulee ? "line-through" : "none" }}>{a.texte}</div>
+            <div style={{ fontSize: 11, color: "var(--muted-soft)", marginTop: 2 }}>
+              {fmtDateHeure(a.date)}{a.activite ? ` · ${a.activite}` : ""}
+              {a.annulee && <span style={{ color: "var(--st-absent-c)", fontWeight: 700 }}> · Annulée</span>}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 4, flexShrink: 0 }}>
+            {a.annulee ? (
+              <button onClick={() => reactiverAnnotation(a.id)} title="Réactiver cette annotation" style={{ border: "none", background: "none", color: "var(--muted-soft)", cursor: "pointer", padding: 4, display: "flex" }}>
+                <RotateCcw size={14} />
+              </button>
+            ) : (
+              <button onClick={() => annulerAnnotation(a.id)} title="Annuler cette annotation (reste visible, marquée annulée)" style={{ border: "none", background: "none", color: "var(--muted-soft)", cursor: "pointer", padding: 4, display: "flex" }}>
+                <X size={14} />
+              </button>
+            )}
+            <button onClick={() => supprimerAnnotation(a.id)} title="Supprimer définitivement cette annotation" style={{ border: "none", background: "none", color: "var(--muted-soft)", cursor: "pointer", padding: 4, display: "flex" }}>
+              <Trash2 size={14} />
+            </button>
           </div>
         </div>
       ))}
