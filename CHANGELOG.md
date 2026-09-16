@@ -6,11 +6,9 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.17.0**
+Version actuelle : **1.18.0**
 
 ---
-
-## 1. Vue d'ensemble des fonctionnalités
 
 ### Accueil
 - Emploi du temps de la semaine affiché sous forme de tableau (jours × heures)
@@ -24,7 +22,9 @@ Version actuelle : **1.17.0**
 - Classes simples et groupes classe (jusqu'à 5 classes d'origine réunies)
 - Fiche classe : PP, CPE, délégués, photo, renommage
 - Import d'une liste d'appel complète (Excel/CSV/ODS) avec mapping des colonnes et aperçu avant validation
-- Appel avec statuts Présent / Sans tenue / Dispensé / Absent, compteur d'oublis de tenue par cycle
+- Appel avec statuts Présent / Sans tenue / Dispensé / Absent / Retard, sélectionnés via un
+  menu déroulant à grande icône ; compteur d'oublis de tenue par cycle
+- Appel impossible pour une date où la classe n'a pas cours selon l'emploi du temps
 - Gestion des dispenses (ponctuelles ou par période), avec photo de justificatif dupliquée dans Documents
 - Annotations rapides horodatées (positif/négatif), contextualisées à l'activité du cycle en
   cours ; chacune peut être annulée (reste visible, marquée « Annulée », réactivable) ou
@@ -66,6 +66,28 @@ Version actuelle : **1.17.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.18.0 — 16/09/2026
+- **Appel bloqué si la classe n'a pas cours ce jour-là** : l'écran d'appel vérifie désormais
+  l'emploi du temps (jour de la semaine + alternance semaine A/B) avant d'autoriser la saisie ;
+  si la classe sélectionnée n'a aucun créneau à la date choisie, la liste des élèves et le
+  bouton d'enregistrement sont masqués et un message l'indique (avec les jours habituels de
+  cours de la classe). Si l'emploi du temps n'est pas encore configuré, rien n'est bloqué
+- **Fiche d'appel repensée** : chaque élève est maintenant affiché sur deux lignes — le nom et
+  prénom complets ne sont plus tronqués. Les 4 boutons de statut + le sélecteur de retard sont
+  remplacés par un **menu déroulant unique** (Présent / Sans tenue / Dispensé / Absent / Retard)
+  représenté par une grosse icône (46×46) reflétant le statut choisi ; quand « Retard » est
+  sélectionné, un sélecteur de minutes apparaît juste à côté. Le bouton d'annotation rapide
+  reste toujours visible et accessible, agrandi lui aussi
+- Nouveau statut **Retard** intégré à la liste des statuts d'appel (couleur et icône dédiées),
+  à la place du réglage de retard qui était auparavant indépendant du statut
+- **Fiche élève** : un clic sur la photo de l'élève ouvre désormais une fenêtre pour l'agrandir,
+  ou pour en reprendre une nouvelle directement depuis cette fenêtre
+- **Trombinoscope** : l'icône appareil photo (superposée sur chaque photo, et sur celle du
+  professeur principal) est agrandie pour être plus facile à toucher sans tomber par erreur sur
+  la fiche élève
+- Correction d'un bug préexistant : les variables de couleur du mode sombre n'étaient rattachées
+  à aucun sélecteur CSS valide, ce qui empêchait le mode sombre de s'appliquer réellement
 
 ### v1.17.0 — 15/09/2026
 - **Fiche élève** : chaque annotation rapide (positif/négatif) propose désormais deux actions
