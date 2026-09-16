@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.18.0";
+const APP_VERSION = "1.20.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -639,7 +639,7 @@ function QuickTile({ Icon, label, onClick, tone }) {
 }
 
 // ---------- Écran : Gestion de classe (regroupe Classe/Groupe, Appel, Trombi) ----------
-function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, appelPreselection, onAppelPreselectionConsumed, edt }) {
+function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, appelPreselection, onAppelPreselectionConsumed, edt, appelContexte, onAppelContexteChange, appelActionsRef }) {
   const sousOnglets = [
     { key: "appel", label: "Appel" },
     { key: "classes", label: "Classe/Groupe" },
@@ -664,7 +664,7 @@ function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, u
         ))}
       </div>
       {sousOnglet === "classes" && <ClassesScreen classes={classes} setClasses={setClasses} onOpenClass={onOpenClass} />}
-      {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} preselection={appelPreselection} onPreselectionConsumed={onAppelPreselectionConsumed} edt={edt} />}
+      {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} preselection={appelPreselection} onPreselectionConsumed={onAppelPreselectionConsumed} edt={edt} contexteInitial={appelContexte} onContexteChange={onAppelContexteChange} actionsRef={appelActionsRef} />}
       {sousOnglet === "trombi" && <TrombiScreen classes={classes} updateEleve={updateEleve} updateClasse={updateClasse} onOpenEleve={onOpenEleve} />}
       {sousOnglet === "recherche" && <RechercheElevesScreen classes={classes} onOpenEleve={onOpenEleve} />}
     </div>
@@ -2007,10 +2007,17 @@ function RechercheElevesScreen({ classes, onOpenEleve }) {
 }
 
 // ---------- Écran : Appel ----------
-function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, preselection, onPreselectionConsumed, edt }) {
-  const [classeId, setClasseId] = useState(preselection?.classeId || classes[0]?.id);
+function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, preselection, onPreselectionConsumed, edt, contexteInitial, onContexteChange, actionsRef }) {
+  const [classeId, setClasseId] = useState(preselection?.classeId || contexteInitial?.classeId || classes[0]?.id);
   const classe = classes.find((c) => c.id === classeId);
-  const [date, setDate] = useState(preselection?.date || todayISO());
+  const [date, setDate] = useState(preselection?.date || contexteInitial?.date || todayISO());
+
+  // Mémorise le contexte d'appel en cours (classe + date) au niveau de l'application, pour
+  // pouvoir y revenir directement (sans tout reconfigurer) après un aller-retour sur une fiche élève.
+  React.useEffect(() => {
+    onContexteChange && onContexteChange({ classeId, date });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classeId, date]);
 
   // La classe n'a cours ce jour-là que si l'emploi du temps le confirme (jour + alternance
   // semaine A/B). Si aucun créneau n'est configuré du tout dans l'appli, on ne bloque rien
@@ -2035,6 +2042,8 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   const [statuts, setStatuts] = useState({});
   const [retards, setRetards] = useState({});
   const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false); // des changements ont été faits depuis le dernier enregistrement
+  const [navigationEnAttente, setNavigationEnAttente] = useState(null); // { classeId, eleveId } — fiche demandée pendant que l'appel n'est pas enregistré
   const [detailsOuverts, setDetailsOuverts] = useState(false);
   const [dispenseCible, setDispenseCible] = useState(null); // élève pour lequel on configure une dispense
 
@@ -2044,6 +2053,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
     setStatuts(seanceExistante ? { ...seanceExistante.appels } : {});
     setRetards(seanceExistante ? { ...(seanceExistante.retards || {}) } : {});
     setSaved(false);
+    setDirty(false);
   }, [date, classeId]);
 
   const comptesST = useMemo(() => {
@@ -2063,6 +2073,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   const setStatut = (eleveId, statut) => {
     setStatuts((prev) => ({ ...prev, [eleveId]: prev[eleveId] === statut ? undefined : statut }));
     setSaved(false);
+    setDirty(true);
   };
 
   const setRetard = (eleveId, minutes) => {
@@ -2073,6 +2084,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
       return suivant;
     });
     setSaved(false);
+    setDirty(true);
   };
 
   const onClicStatut = (eleve, key) => {
@@ -2171,12 +2183,36 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
     const cycles = classe.cycles.map((c) => c.id === cycleCible.id ? { ...c, seances: nouvellesSeances } : c);
     updateClasse({ ...classe, cycles });
     setSaved(true);
+    setDirty(false);
   };
+
+  // Tient à jour, à chaque rendu, l'état « non enregistré » et la fonction d'enregistrement
+  // exposés au niveau de l'application (onglets du bas, sous-onglets Gestion) pour protéger
+  // toute sortie de cet écran tant que l'appel n'est pas enregistré.
+  React.useEffect(() => {
+    if (actionsRef) actionsRef.current = { dirty, enregistrer };
+  });
 
   const [formCycleOuvert, setFormCycleOuvert] = useState(false);
   const creerCycle = ({ activite }) => {
     updateClasse({ ...classe, cycles: [...classe.cycles, { id: uid(), activite, dateDebut: todayISO(), seances: [] }] });
     setFormCycleOuvert(false);
+  };
+
+  // Ouvrir la fiche d'un élève quitte l'écran d'appel (il n'est pas rare de toucher la photo
+  // par erreur) : si des changements non enregistrés existent, on demande d'abord quoi en faire.
+  const demanderOuvertureFiche = (cid, eid) => {
+    if (dirty) { setNavigationEnAttente({ classeId: cid, eleveId: eid }); return; }
+    onOpenEleve(cid, eid);
+  };
+  const confirmerEnregistrerEtOuvrir = () => {
+    enregistrer();
+    if (navigationEnAttente) onOpenEleve(navigationEnAttente.classeId, navigationEnAttente.eleveId);
+    setNavigationEnAttente(null);
+  };
+  const confirmerOuvrirSansEnregistrer = () => {
+    if (navigationEnAttente) onOpenEleve(navigationEnAttente.classeId, navigationEnAttente.eleveId);
+    setNavigationEnAttente(null);
   };
 
   if (!classe) return null;
@@ -2195,13 +2231,13 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
     const estRetard = statutActuel === "retard";
     return (
       <div key={e.id} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 6px", borderBottom: `1px solid ${LINE}`, background: dispBg, borderRadius: dispense ? 8 : 0, opacity: inactif ? 0.5 : 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <div onClick={() => onOpenEleve(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
-            <Avatar eleve={e} size={34} numero={numeroEleve(classe, e.id)} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div onClick={() => demanderOuvertureFiche(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
+            <Avatar eleve={e} size={52} numero={numeroEleve(classe, e.id)} />
             {!dispense && compteST > 0 && (
               <div title={`${compteST} oubli(s) de tenue${perteFinale ? " · -1 pt" : ""}`} style={{
-                position: "absolute", bottom: -3, right: -3, minWidth: 15, height: 15, borderRadius: 8, padding: "0 3px",
-                background: perteFinale ? "var(--st-absent-c)" : "var(--st-tenue-c)", color: "#fff", fontSize: 9, fontWeight: 700,
+                position: "absolute", bottom: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8, padding: "0 3px",
+                background: perteFinale ? "var(--st-absent-c)" : "var(--st-tenue-c)", color: "#fff", fontSize: 9.5, fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${CARD}`,
               }}>
                 {compteST}
@@ -2209,7 +2245,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
             )}
           </div>
           <div
-            onClick={() => onOpenEleve(classeId, e.id)}
+            onClick={() => demanderOuvertureFiche(classeId, e.id)}
             title={inactif ? "Élève retiré de la classe" : dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
             style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "normal", overflowWrap: "break-word", lineHeight: 1.25, textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
           >
@@ -2220,7 +2256,19 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
         {inactif ? (
           <div style={{ fontSize: 11, color: "var(--muted-soft)", fontStyle: "italic", padding: "0 6px" }}>Retiré(e) de la classe</div>
         ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 43 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+          {estRetard && (
+            <select
+              value={retards[e.id] || 5}
+              onChange={(ev) => setRetard(e.id, Number(ev.target.value))}
+              title="Minutes de retard"
+              style={{ height: 46, borderRadius: 11, border: `1.5px solid var(--st-retard-bd)`, background: "var(--st-retard-bg)", color: "var(--st-retard-c)", fontWeight: 700, fontSize: 13, padding: "0 8px", flexShrink: 0 }}
+            >
+              {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
+                <option key={m} value={m}>{m} min</option>
+              ))}
+            </select>
+          )}
           <div style={{ position: "relative", width: 46, height: 46, flexShrink: 0 }}>
             <div style={{
               width: 46, height: 46, borderRadius: 11, border: `1.5px solid ${infoStatut ? infoStatut.color : LINE}`,
@@ -2241,19 +2289,6 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
               ))}
             </select>
           </div>
-          {estRetard && (
-            <select
-              value={retards[e.id] || 5}
-              onChange={(ev) => setRetard(e.id, Number(ev.target.value))}
-              title="Minutes de retard"
-              style={{ height: 46, borderRadius: 11, border: `1.5px solid var(--st-retard-bd)`, background: "var(--st-retard-bg)", color: "var(--st-retard-c)", fontWeight: 700, fontSize: 13, padding: "0 8px", flexShrink: 0 }}
-            >
-              {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
-                <option key={m} value={m}>{m} min</option>
-              ))}
-            </select>
-          )}
-          <div style={{ flex: 1 }} />
           <button
             onClick={() => onAnnotate(classeId, e.id, cycle?.activite)}
             title="Annotation rapide"
@@ -2376,6 +2411,38 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
           onRedefinirPeriode={redefinirPeriodeExistante}
         />
       )}
+      {navigationEnAttente && (
+        <ConfirmationAppelNonEnregistreModal
+          onEnregistrerEtContinuer={confirmerEnregistrerEtOuvrir}
+          onContinuerSansEnregistrer={confirmerOuvrirSansEnregistrer}
+          onAnnuler={() => setNavigationEnAttente(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------- Modale : appel non enregistré, avant de quitter la fiche d'appel ----------
+function ConfirmationAppelNonEnregistreModal({ onEnregistrerEtContinuer, onContinuerSansEnregistrer, onAnnuler }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onAnnuler}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 380, background: CARD, borderRadius: 16, padding: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 14.5, color: INK, marginBottom: 8 }}>Appel non enregistré</div>
+        <div style={{ fontSize: 13, color: "var(--muted-soft)", marginBottom: 16 }}>
+          Tu as des changements non enregistrés sur cet appel. Que veux-tu faire avant d'ouvrir la fiche de cet élève ?
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button onClick={onEnregistrerEtContinuer} style={{ padding: "10px 0", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            Enregistrer et continuer
+          </button>
+          <button onClick={onContinuerSansEnregistrer} style={{ padding: "10px 0", borderRadius: 10, border: `1px solid ${LINE}`, background: CARD, color: INK, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            Continuer sans enregistrer
+          </button>
+          <button onClick={onAnnuler} style={{ padding: "9px 0", borderRadius: 10, border: "none", background: "none", color: "var(--muted-soft)", fontSize: 12.5, cursor: "pointer" }}>
+            Annuler — rester sur l'appel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -6624,6 +6691,9 @@ export default function EpsPro() {
   const [sousOngletGestion, setSousOngletGestion] = useState(() => sessionStorage.getItem("eps_pro_sousOnglet") || "appel");
   const [nav, setNav] = useState([]); // pile d'écrans secondaires — restaurée depuis sessionStorage une fois les données chargées (cf. effet ci-dessous)
   const [appelPreselection, setAppelPreselection] = useState(null); // { classeId, date } depuis un clic sur l'EDT
+  const [appelContexte, setAppelContexte] = useState(null); // { classeId, date } — dernier contexte d'appel utilisé, pour un retour rapide sans tout reconfigurer
+  const appelActionsRef = useRef({ dirty: false, enregistrer: () => {} }); // exposé par AppelScreen : état non enregistré + fonction d'enregistrement, pour protéger toute sortie de l'écran d'appel (onglets du bas, sous-onglets Gestion, fiche élève)
+  const [confirmationQuitterAppel, setConfirmationQuitterAppel] = useState(null); // { action } — action de navigation en attente de confirmation
   const [annotCible, setAnnotCible] = useState(null); // { classeId, eleveId, activite }
   const [theme, setTheme] = useState("clair");
   const [lockPhoto, setLockPhoto] = useState(null);
@@ -6809,6 +6879,34 @@ export default function EpsPro() {
 
   const goto = (t) => { setTab(t); setNav([]); };
 
+  // Protège toute sortie de l'écran d'appel (onglets du bas, sous-onglets Gestion) quand des
+  // changements n'ont pas encore été enregistrés : on demande d'abord quoi en faire.
+  const surAppelEcranActif = tab === "gestion" && sousOngletGestion === "appel" && nav.length === 0;
+  const demanderQuitterAppelSiBesoin = (action) => {
+    if (surAppelEcranActif && appelActionsRef.current.dirty) {
+      setConfirmationQuitterAppel({ action });
+    } else {
+      action();
+    }
+  };
+  const gotoGuarde = (t) => {
+    if (t === tab && nav.length === 0) { goto(t); return; }
+    demanderQuitterAppelSiBesoin(() => goto(t));
+  };
+  const setSousOngletGestionGuarde = (s) => {
+    if (s === sousOngletGestion) return;
+    demanderQuitterAppelSiBesoin(() => setSousOngletGestion(s));
+  };
+  const confirmerEnregistrerEtQuitterAppel = () => {
+    appelActionsRef.current.enregistrer();
+    if (confirmationQuitterAppel) confirmationQuitterAppel.action();
+    setConfirmationQuitterAppel(null);
+  };
+  const confirmerQuitterAppelSansEnregistrer = () => {
+    if (confirmationQuitterAppel) confirmationQuitterAppel.action();
+    setConfirmationQuitterAppel(null);
+  };
+
   const ouvrirAppelDepuisEdt = (classeId, date) => {
     setAppelPreselection({ classeId, date });
     setSousOngletGestion("appel");
@@ -6900,7 +6998,7 @@ export default function EpsPro() {
   } else {
     switch (tab) {
       case "accueil": title = "Accueil"; body = <Accueil classes={classes} edt={edt} setEdt={setEdt} etablissement={etablissement} onOpenEdt={() => push("edt", {})} onOpenAppel={ouvrirAppelDepuisEdt} />; break;
-      case "gestion": title = "Gestion de classe"; body = <GestionClasseScreen sousOnglet={sousOngletGestion} setSousOnglet={setSousOngletGestion} classes={classes} setClasses={setClasses} updateClasse={updateClasse} updateEleve={updateEleveIn} onOpenClass={(id) => push("classeDetail", { id })} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} appelPreselection={appelPreselection} onAppelPreselectionConsumed={() => setAppelPreselection(null)} edt={edt} />; break;
+      case "gestion": title = "Gestion de classe"; body = <GestionClasseScreen sousOnglet={sousOngletGestion} setSousOnglet={setSousOngletGestionGuarde} classes={classes} setClasses={setClasses} updateClasse={updateClasse} updateEleve={updateEleveIn} onOpenClass={(id) => push("classeDetail", { id })} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} appelPreselection={appelPreselection} onAppelPreselectionConsumed={() => setAppelPreselection(null)} edt={edt} appelContexte={appelContexte} onAppelContexteChange={setAppelContexte} appelActionsRef={appelActionsRef} />; break;
       case "documents": title = "Documents"; body = <DocumentsScreen biblio={biblio} setBiblio={setBiblio} onSupprimerPhotoDeDispense={supprimerPhotoDeDispense} onOpenRecapDispenses={() => push("recapDispenses", {})} onOpenEvaluations={() => push("evaluations", {})} onOpenEvaluation={(id) => push("evaluationEditor", { id })} />; break;
       case "outils": title = "Outils"; body = <OutilsScreen onOpenOutil={(id) => push("outil", { id })} onOpenEvaluations={() => push("evaluations", {})} onOpenEdt={() => push("edt", {})} onOpenAssistantRentree={() => push("assistantRentree", {})} onOpenChangerPin={() => push("changerPin", {})} />; break;
       case "liens": title = "Liens"; body = (
@@ -6957,7 +7055,7 @@ export default function EpsPro() {
           <nav className="eps-side-nav">
             <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 17, color: PRIMARY, padding: "6px 10px 14px", letterSpacing: 0.3 }}>EPS PRO</div>
             {navItems.map((n) => (
-              <button key={n.key} className="eps-side-link" onClick={() => goto(n.key)} style={{ color: tab === n.key && !current ? PRIMARY : "var(--muted)", background: tab === n.key && !current ? PRIMARY_SOFT : "none" }}>
+              <button key={n.key} className="eps-side-link" onClick={() => gotoGuarde(n.key)} style={{ color: tab === n.key && !current ? PRIMARY : "var(--muted)", background: tab === n.key && !current ? PRIMARY_SOFT : "none" }}>
                 <n.Icon size={17} /> {n.label}
               </button>
             ))}
@@ -6969,7 +7067,7 @@ export default function EpsPro() {
             {!current && (
               <div className="eps-bottom-nav">
                 {navItems.map((n) => (
-                  <NavButton key={n.key} active={tab === n.key} onClick={() => goto(n.key)} Icon={n.Icon} label={n.label} />
+                  <NavButton key={n.key} active={tab === n.key} onClick={() => gotoGuarde(n.key)} Icon={n.Icon} label={n.label} />
                 ))}
               </div>
             )}
@@ -6977,6 +7075,13 @@ export default function EpsPro() {
 
           {annotCible && eleveAnnotation && (
             <AnnotationModal eleve={eleveAnnotation} activite={annotCible.activite} onClose={() => setAnnotCible(null)} onSave={ajouterAnnotation} />
+          )}
+          {confirmationQuitterAppel && (
+            <ConfirmationAppelNonEnregistreModal
+              onEnregistrerEtContinuer={confirmerEnregistrerEtQuitterAppel}
+              onContinuerSansEnregistrer={confirmerQuitterAppelSansEnregistrer}
+              onAnnuler={() => setConfirmationQuitterAppel(null)}
+            />
           )}
         </div>
       )}
