@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.17.0";
+const APP_VERSION = "1.18.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -145,6 +145,7 @@ const STATUTS = {
   sans_tenue: { label: "Sans tenue", short: "ST", color: "var(--st-tenue-c)", bg: "var(--st-tenue-bg)", border: "var(--st-tenue-bd)", Icon: Shirt },
   dispense: { label: "Dispensé", short: "D", color: "var(--st-dispense-c)", bg: "var(--st-dispense-bg)", border: "var(--st-dispense-bd)", Icon: HeartPulse },
   absent: { label: "Absent", short: "A", color: "var(--st-absent-c)", bg: "var(--st-absent-bg)", border: "var(--st-absent-bd)", Icon: UserX },
+  retard: { label: "Retard", short: "R", color: "var(--st-retard-c)", bg: "var(--st-retard-bg)", border: "var(--st-retard-bd)", Icon: Clock },
 };
 
 const INK = "var(--ink)";
@@ -170,6 +171,7 @@ const THEME_CSS = `
     --st-tenue-c: #C2650A; --st-tenue-bg: #FDEEDB; --st-tenue-bd: #F2CDA0;
     --st-dispense-c: #2E6FD1; --st-dispense-bg: #E6EFFC; --st-dispense-bd: #C0D6F5;
     --st-absent-c: #D1362B; --st-absent-bg: #FCEAE8; --st-absent-bd: #F3C2BC;
+    --st-retard-c: #8A5A00; --st-retard-bg: #FCF2D9; --st-retard-bd: #EBCD86;
     --muted: #6B6656;
     --muted-soft: #8A8578;
     --faint: #D8D4C8;
@@ -183,6 +185,7 @@ const THEME_CSS = `
     --tile-blocnote: linear-gradient(135deg, #16C79A, #FFC145);
     --tile-liens: linear-gradient(135deg, #2E6FD1, #16C79A);
   }
+  [data-theme="sombre"] {
     --paper: #101713;
     --card: #1A2420;
     --ink: #EEF3EC;
@@ -195,6 +198,7 @@ const THEME_CSS = `
     --st-tenue-c: #FFB35C; --st-tenue-bg: #3A2712; --st-tenue-bd: #5C3B16;
     --st-dispense-c: #7FB0FF; --st-dispense-bg: #17273D; --st-dispense-bd: #234368;
     --st-absent-c: #FF7A70; --st-absent-bg: #3A1613; --st-absent-bd: #5C231E;
+    --st-retard-c: #E5C15C; --st-retard-bg: #3A2F0F; --st-retard-bd: #5C4A18;
     --muted: #A9B0A4;
     --muted-soft: #8B9388;
     --faint: #3A453E;
@@ -366,20 +370,22 @@ function estDispense(eleve, dateStr) {
   return !!dispenseDuJour(eleve, dateStr);
 }
 
-function Avatar({ eleve, size = 40, numero }) {
+function Avatar({ eleve, size = 40, numero, onClick }) {
   const contenu = numero != null ? String(numero).padStart(2, "0") : initials(eleve.prenom, eleve.nom);
   return eleve.photo ? (
     <img
+      onClick={onClick}
       src={eleve.photo}
       alt={`${eleve.prenom} ${eleve.nom}`}
-      style={{ width: size, height: size, borderRadius: 10, objectFit: "cover", border: `1px solid ${LINE}`, opacity: eleve.inactif ? 0.45 : 1, filter: eleve.inactif ? "grayscale(1)" : "none" }}
+      style={{ width: size, height: size, borderRadius: 10, objectFit: "cover", border: `1px solid ${LINE}`, opacity: eleve.inactif ? 0.45 : 1, filter: eleve.inactif ? "grayscale(1)" : "none", cursor: onClick ? "pointer" : undefined }}
     />
   ) : (
     <div
+      onClick={onClick}
       style={{
         width: size, height: size, borderRadius: 10, background: eleve.inactif ? "var(--faint)" : PRIMARY_SOFT, color: eleve.inactif ? "var(--muted-soft)" : PRIMARY,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontWeight: 700, fontSize: size * 0.36, border: `1px solid ${LINE}`,
+        fontWeight: 700, fontSize: size * 0.36, border: `1px solid ${LINE}`, cursor: onClick ? "pointer" : undefined,
       }}
     >
       {contenu}
@@ -633,7 +639,7 @@ function QuickTile({ Icon, label, onClick, tone }) {
 }
 
 // ---------- Écran : Gestion de classe (regroupe Classe/Groupe, Appel, Trombi) ----------
-function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, appelPreselection, onAppelPreselectionConsumed }) {
+function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, updateClasse, updateEleve, onOpenClass, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, appelPreselection, onAppelPreselectionConsumed, edt }) {
   const sousOnglets = [
     { key: "appel", label: "Appel" },
     { key: "classes", label: "Classe/Groupe" },
@@ -658,7 +664,7 @@ function GestionClasseScreen({ sousOnglet, setSousOnglet, classes, setClasses, u
         ))}
       </div>
       {sousOnglet === "classes" && <ClassesScreen classes={classes} setClasses={setClasses} onOpenClass={onOpenClass} />}
-      {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} preselection={appelPreselection} onPreselectionConsumed={onAppelPreselectionConsumed} />}
+      {sousOnglet === "appel" && <AppelScreen classes={classes} updateClasse={updateClasse} onOpenEleve={onOpenEleve} onAnnotate={onAnnotate} onVoirFicheCycle={onVoirFicheCycle} biblio={biblio} setBiblio={setBiblio} preselection={appelPreselection} onPreselectionConsumed={onAppelPreselectionConsumed} edt={edt} />}
       {sousOnglet === "trombi" && <TrombiScreen classes={classes} updateEleve={updateEleve} updateClasse={updateClasse} onOpenEleve={onOpenEleve} />}
       {sousOnglet === "recherche" && <RechercheElevesScreen classes={classes} onOpenEleve={onOpenEleve} />}
     </div>
@@ -1837,10 +1843,10 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
         <label
           onClick={(ev) => ev.stopPropagation()}
           title="Changer la photo"
-          style={{ position: "absolute", bottom: 4, right: 4, background: CARD, borderRadius: 8, padding: 4, boxShadow: "0 1px 4px rgba(0,0,0,0.2)", cursor: "pointer", display: "flex" }}
+          style={{ position: "absolute", bottom: 4, right: 4, background: CARD, borderRadius: 10, padding: 7, boxShadow: "0 1px 4px rgba(0,0,0,0.25)", cursor: "pointer", display: "flex" }}
         >
           <input type="file" accept="image/*" capture="environment" onChange={(ev) => ev.target.files[0] && onPhoto(e.id, ev.target.files[0])} style={{ display: "none" }} />
-          <Camera size={13} color={PRIMARY} />
+          <Camera size={20} color={PRIMARY} />
         </label>
       </div>
       <div onClick={() => onOpenEleve(classeId, e.id)} style={{ fontSize: 11.5, marginTop: 5, fontWeight: 600, color: INK, cursor: "pointer", textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}>{e.prenom}</div>
@@ -1873,10 +1879,10 @@ function TrombiScreen({ classes, updateEleve, updateClasse, onOpenEleve }) {
               </div>
               <label
                 title="Changer la photo"
-                style={{ position: "absolute", bottom: 4, right: 4, background: CARD, borderRadius: 8, padding: 4, boxShadow: "0 1px 4px rgba(0,0,0,0.2)", cursor: "pointer", display: "flex" }}
+                style={{ position: "absolute", bottom: 4, right: 4, background: CARD, borderRadius: 10, padding: 7, boxShadow: "0 1px 4px rgba(0,0,0,0.25)", cursor: "pointer", display: "flex" }}
               >
                 <input type="file" accept="image/*" capture="environment" onChange={(ev) => ev.target.files[0] && onPPPhoto(ev.target.files[0])} style={{ display: "none" }} />
-                <Camera size={13} color={PRIMARY} />
+                <Camera size={20} color={PRIMARY} />
               </label>
             </div>
             <div style={{ fontSize: 11.5, marginTop: 5, fontWeight: 700, color: PRIMARY }}>Prof. principal</div>
@@ -2001,10 +2007,22 @@ function RechercheElevesScreen({ classes, onOpenEleve }) {
 }
 
 // ---------- Écran : Appel ----------
-function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, preselection, onPreselectionConsumed }) {
+function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFicheCycle, biblio, setBiblio, preselection, onPreselectionConsumed, edt }) {
   const [classeId, setClasseId] = useState(preselection?.classeId || classes[0]?.id);
   const classe = classes.find((c) => c.id === classeId);
   const [date, setDate] = useState(preselection?.date || todayISO());
+
+  // La classe n'a cours ce jour-là que si l'emploi du temps le confirme (jour + alternance
+  // semaine A/B). Si aucun créneau n'est configuré du tout dans l'appli, on ne bloque rien
+  // (emploi du temps pas encore renseigné).
+  const edtConfigure = (edt?.creneaux || []).length > 0;
+  const creneauJour = creneauPourClasseEtDate(edt, classeId, date);
+  const pasCoursCeJour = edtConfigure && !creneauJour;
+  const joursCoursClasse = useMemo(() => {
+    if (!edtConfigure) return [];
+    const cles = [...new Set((edt.creneaux || []).filter((c) => c.classeId === classeId).map((c) => c.jour))];
+    return JOURS.filter((j) => cles.includes(j.key)).map((j) => j.label);
+  }, [edt, classeId, edtConfigure]);
 
   React.useEffect(() => {
     if (!preselection) return;
@@ -2058,11 +2076,13 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   };
 
   const onClicStatut = (eleve, key) => {
+    if (!key) { setStatut(eleve.id, undefined); return; }
     if (key === "dispense" && statuts[eleve.id] !== "dispense") {
       setDispenseCible(eleve);
       return;
     }
     setStatut(eleve.id, key);
+    if (key === "retard" && !retards[eleve.id]) setRetard(eleve.id, 5);
   };
 
   const validerDispenseJourSeul = () => {
@@ -2140,6 +2160,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
   };
 
   const enregistrer = () => {
+    if (pasCoursCeJour) return;
     const cycleCible = cycleEnCoursDeClasse(classe, date);
     if (!cycleCible) return;
     const seancesActuelles = cycleCible.seances || [];
@@ -2169,77 +2190,77 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
     const dispBg = dispense ? (dispenseAvecPhoto ? "var(--st-dispense-bg)" : "var(--st-absent-bg)") : "transparent";
     const dispColor = dispense ? (dispenseAvecPhoto ? "var(--st-dispense-c)" : "var(--st-absent-c)") : INK;
     const inactif = !!e.inactif;
+    const statutActuel = statuts[e.id];
+    const infoStatut = statutActuel ? STATUTS[statutActuel] : null;
+    const estRetard = statutActuel === "retard";
     return (
-      <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 6px", borderBottom: `1px solid ${LINE}`, background: dispBg, borderRadius: dispense ? 8 : 0, opacity: inactif ? 0.5 : 1 }}>
-        <div onClick={() => onOpenEleve(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
-          <Avatar eleve={e} size={30} numero={numeroEleve(classe, e.id)} />
-          {!dispense && compteST > 0 && (
-            <div title={`${compteST} oubli(s) de tenue${perteFinale ? " · -1 pt" : ""}`} style={{
-              position: "absolute", bottom: -3, right: -3, minWidth: 15, height: 15, borderRadius: 8, padding: "0 3px",
-              background: perteFinale ? "var(--st-absent-c)" : "var(--st-tenue-c)", color: "#fff", fontSize: 9, fontWeight: 700,
-              display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${CARD}`,
-            }}>
-              {compteST}
-            </div>
-          )}
-        </div>
-        <div
-          onClick={() => onOpenEleve(classeId, e.id)}
-          title={inactif ? "Élève retiré de la classe" : dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
-          style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
-        >
-          {e.prenom} {e.nom}{e.sexe && <span style={{ fontSize: 10.5, fontWeight: 400, color: "var(--muted-soft)" }}> · {normaliserSexe(e.sexe)}</span>}
-          {inactif && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--st-absent-c)" }}> · Retiré(e)</span>}
+      <div key={e.id} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 6px", borderBottom: `1px solid ${LINE}`, background: dispBg, borderRadius: dispense ? 8 : 0, opacity: inactif ? 0.5 : 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <div onClick={() => onOpenEleve(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
+            <Avatar eleve={e} size={34} numero={numeroEleve(classe, e.id)} />
+            {!dispense && compteST > 0 && (
+              <div title={`${compteST} oubli(s) de tenue${perteFinale ? " · -1 pt" : ""}`} style={{
+                position: "absolute", bottom: -3, right: -3, minWidth: 15, height: 15, borderRadius: 8, padding: "0 3px",
+                background: perteFinale ? "var(--st-absent-c)" : "var(--st-tenue-c)", color: "#fff", fontSize: 9, fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${CARD}`,
+              }}>
+                {compteST}
+              </div>
+            )}
+          </div>
+          <div
+            onClick={() => onOpenEleve(classeId, e.id)}
+            title={inactif ? "Élève retiré de la classe" : dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
+            style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "normal", overflowWrap: "break-word", lineHeight: 1.25, textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
+          >
+            {e.prenom} {e.nom}{e.sexe && <span style={{ fontSize: 10.5, fontWeight: 400, color: "var(--muted-soft)" }}> · {normaliserSexe(e.sexe)}</span>}
+            {inactif && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--st-absent-c)" }}> · Retiré(e)</span>}
+          </div>
         </div>
         {inactif ? (
-          <div style={{ fontSize: 11, color: "var(--muted-soft)", fontStyle: "italic", flexShrink: 0, padding: "0 6px" }}>Retiré(e) de la classe</div>
+          <div style={{ fontSize: 11, color: "var(--muted-soft)", fontStyle: "italic", padding: "0 6px" }}>Retiré(e) de la classe</div>
         ) : (
-        <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-          {Object.entries(STATUTS).map(([key, s]) => {
-            const active = statuts[e.id] === key;
-            return (
-              <button
-                key={key}
-                onClick={() => onClicStatut(e, key)}
-                title={s.label}
-                style={{
-                  width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${active ? s.color : LINE}`,
-                  background: active ? s.color : CARD, color: active ? CARD : s.color,
-                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
-                }}
-              >
-                <s.Icon size={16} />
-              </button>
-            );
-          })}
-          <button
-            onClick={() => onAnnotate(classeId, e.id, cycle?.activite)}
-            title="Annotation rapide"
-            style={{ width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${LINE}`, background: CARD, color: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
-          >
-            <StickyNote size={15} />
-          </button>
-          <div style={{ position: "relative", width: 34, height: 34, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 43 }}>
+          <div style={{ position: "relative", width: 46, height: 46, flexShrink: 0 }}>
             <div style={{
-              width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${retards[e.id] ? "var(--st-tenue-c)" : LINE}`,
-              background: retards[e.id] ? "var(--st-tenue-bg)" : CARD, color: retards[e.id] ? "var(--st-tenue-c)" : "var(--muted-soft)",
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none",
+              width: 46, height: 46, borderRadius: 11, border: `1.5px solid ${infoStatut ? infoStatut.color : LINE}`,
+              background: infoStatut ? infoStatut.bg : CARD, color: infoStatut ? infoStatut.color : "var(--muted-soft)",
+              display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none",
             }}>
-              <Clock size={13} />
-              {retards[e.id] > 0 && <span style={{ fontSize: 8, fontWeight: 700, lineHeight: 1, marginTop: 1 }}>{retards[e.id]}'</span>}
+              {infoStatut ? <infoStatut.Icon size={22} /> : <span style={{ fontSize: 10.5, fontWeight: 700 }}>—</span>}
             </div>
             <select
-              value={retards[e.id] || 0}
-              onChange={(ev) => setRetard(e.id, Number(ev.target.value))}
-              title="Retard"
-              style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}
+              value={statutActuel || ""}
+              onChange={(ev) => onClicStatut(e, ev.target.value || null)}
+              title="Statut de présence"
+              style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%", fontSize: 16 }}
             >
-              <option value={0}>Aucun retard</option>
+              <option value="">— Aucun statut —</option>
+              {Object.entries(STATUTS).map(([key, s]) => (
+                <option key={key} value={key}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+          {estRetard && (
+            <select
+              value={retards[e.id] || 5}
+              onChange={(ev) => setRetard(e.id, Number(ev.target.value))}
+              title="Minutes de retard"
+              style={{ height: 46, borderRadius: 11, border: `1.5px solid var(--st-retard-bd)`, background: "var(--st-retard-bg)", color: "var(--st-retard-c)", fontWeight: 700, fontSize: 13, padding: "0 8px", flexShrink: 0 }}
+            >
               {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
                 <option key={m} value={m}>{m} min</option>
               ))}
             </select>
-          </div>
+          )}
+          <div style={{ flex: 1 }} />
+          <button
+            onClick={() => onAnnotate(classeId, e.id, cycle?.activite)}
+            title="Annotation rapide"
+            style={{ width: 46, height: 46, borderRadius: 11, border: `1.5px solid ${LINE}`, background: CARD, color: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+          >
+            <StickyNote size={20} />
+          </button>
         </div>
         )}
       </div>
@@ -2262,13 +2283,25 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
         </button>
       </div>
 
-      {seanceExistante && (
+      {seanceExistante && !pasCoursCeJour && (
         <div style={{ fontSize: 10.5, color: ACCENT, fontWeight: 600, marginBottom: 4 }}>
           Appel déjà enregistré à cette date — les modifications le mettront à jour.
         </div>
       )}
 
-      {detailsOuverts && (
+      {pasCoursCeJour && (
+        <div style={{ background: "var(--st-absent-bg)", border: `1px solid var(--st-absent-bd)`, borderRadius: 12, padding: "14px 14px", marginBottom: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--st-absent-c)", fontWeight: 700, fontSize: 13.5 }}>
+            <Calendar size={16} /> {classe.nom} n'a pas cours ce jour-là
+          </div>
+          <div style={{ fontSize: 12, color: "var(--muted-soft)" }}>
+            D'après l'emploi du temps, cette classe n'a aucun créneau à cette date. Choisissez une autre date pour faire l'appel.
+            {joursCoursClasse.length > 0 && <> Jours habituels : <b style={{ color: INK }}>{joursCoursClasse.join(", ")}</b>.</>}
+          </div>
+        </div>
+      )}
+
+      {!pasCoursCeJour && detailsOuverts && (
         <div style={{ background: CARD, border: `1px solid ${LINE}`, borderRadius: 10, padding: 10, marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: "var(--muted-soft)" }}>Cycle : <b style={{ color: INK }}>{cycle?.activite}</b></div>
@@ -2291,7 +2324,7 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
         </div>
       )}
 
-      {estGroupe ? (
+      {!pasCoursCeJour && (estGroupe ? (
         <>
           {classe.sousClasses.map((s) => {
             const membres = ordonnesAppel.filter((e) => e.sousClasseId === s.id);
@@ -2312,13 +2345,15 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
         </>
       ) : (
         ordonnesAppel.map((e) => renderLigneEleve(e))
-      )}
+      ))}
 
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 58, padding: "10px 16px", background: "linear-gradient(transparent, var(--paper) 30%)" }}>
-        <button onClick={enregistrer} style={{ width: "100%", padding: "13px 0", borderRadius: 12, border: "none", background: saved ? "var(--st-present-c)" : PRIMARY, color: "#fff", fontWeight: 700, fontSize: 14.5, cursor: "pointer" }}>
-          {saved ? "Fiche enregistrée ✓" : (seanceExistante ? "Mettre à jour l'appel" : "Enregistrer l'appel")}
-        </button>
-      </div>
+      {!pasCoursCeJour && (
+        <div style={{ position: "fixed", left: 0, right: 0, bottom: 58, padding: "10px 16px", background: "linear-gradient(transparent, var(--paper) 30%)" }}>
+          <button onClick={enregistrer} style={{ width: "100%", padding: "13px 0", borderRadius: 12, border: "none", background: saved ? "var(--st-present-c)" : PRIMARY, color: "#fff", fontWeight: 700, fontSize: 14.5, cursor: "pointer" }}>
+            {saved ? "Fiche enregistrée ✓" : (seanceExistante ? "Mettre à jour l'appel" : "Enregistrer l'appel")}
+          </button>
+        </div>
+      )}
       {formCycleOuvert && (
         <FormModal
           title="Nouveau cycle"
@@ -2346,6 +2381,36 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
 }
 
 // ---------- Écran : Fiche élève ----------
+// ---------- Modale : photo de l'élève en grand (agrandir / reprendre une photo) ----------
+function PhotoEleveModal({ eleve, onClose, onChangerPhoto }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 70, display: "flex", flexDirection: "column" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ margin: "auto", width: "100%", maxWidth: 420, background: CARD, borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderBottom: `1px solid ${LINE}` }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: INK }}>{eleve.prenom} {eleve.nom}</div>
+          <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)", display: "flex" }}><X size={20} /></button>
+        </div>
+        <div style={{ padding: 14, background: "#f4f2ec", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 220 }}>
+          {eleve.photo ? (
+            <img src={eleve.photo} alt="" style={{ width: "100%", borderRadius: 8, display: "block" }} />
+          ) : (
+            <div style={{ color: "var(--muted-soft)", fontSize: 13, textAlign: "center", padding: 30 }}>Aucune photo pour cet élève pour le moment.</div>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 8, padding: 12, borderTop: `1px solid ${LINE}` }}>
+          <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            <input type="file" accept="image/*" capture="environment" onChange={(e) => e.target.files[0] && onChangerPhoto(e.target.files[0])} style={{ display: "none" }} />
+            <Camera size={16} /> {eleve.photo ? "Reprendre une photo" : "Prendre une photo"}
+          </label>
+          <button onClick={onClose} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${LINE}`, background: "none", color: INK, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibles, onDeplacerEleve, onAnnotate, onOpenBlocNote, biblio, setBiblio, onEleveSuivant, onElevePrecedent, positionFiche }) {
   const [notes, setNotes] = useState(eleve.notes || "");
   const [telE, setTelE] = useState(eleve.telephoneEleve || "");
@@ -2361,6 +2426,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibl
   const [confirmationVidage, setConfirmationVidage] = useState(false);
   const [deplacementOuvert, setDeplacementOuvert] = useState(false);
   const [classeCibleDeplacement, setClasseCibleDeplacement] = useState("");
+  const [photoAgrandie, setPhotoAgrandie] = useState(false);
 
   // Réinitialise les champs locaux quand on change d'élève (navigation suivant/précédent),
   // le composant restant monté d'un élève à l'autre.
@@ -2437,6 +2503,11 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibl
   }, [classe, eleve.id]);
 
   const saveNotes = () => updateEleve({ ...eleve, notes });
+  const changerPhotoEleve = (file) => {
+    const reader = new FileReader();
+    reader.onload = () => { updateEleve({ photo: reader.result }); setPhotoAgrandie(false); };
+    reader.readAsDataURL(file);
+  };
   const saveTelE = () => updateEleve({ ...eleve, telephoneEleve: telE });
   const saveTelP = () => updateEleve({ ...eleve, telephoneParents: telP });
   const savePrenom = () => updateEleve({ ...eleve, prenom: prenomE.trim() || eleve.prenom });
@@ -2592,7 +2663,7 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibl
         </div>
       )}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-        <Avatar eleve={eleve} size={56} numero={numeroEleve(classe, eleve.id)} />
+        <Avatar eleve={eleve} size={56} numero={numeroEleve(classe, eleve.id)} onClick={() => setPhotoAgrandie(true)} />
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
             <input
@@ -2956,6 +3027,9 @@ function FicheEleve({ classe, eleve, updateEleve, updateClasse, classesDisponibl
           onSubmit={creerDispense}
           submitLabel="Ajouter la période"
         />
+      )}
+      {photoAgrandie && (
+        <PhotoEleveModal eleve={eleve} onClose={() => setPhotoAgrandie(false)} onChangerPhoto={changerPhotoEleve} />
       )}
       {dispenseEnEdition && (
         <FormModal
@@ -4956,6 +5030,16 @@ function calculerSemaineAuto(edt, date) {
   return numSemaine % 2 === 0 ? (edt.semaineDepart || "A") : autre;
 }
 
+// Renvoie le créneau d'emploi du temps de la classe correspondant à un jour donné (en tenant
+// compte de l'alternance semaine A/B), ou null si cette classe n'a pas cours ce jour-là.
+function creneauPourClasseEtDate(edt, classeId, dateISO) {
+  if (!edt || !classeId || !dateISO) return null;
+  const date = new Date(dateISO + "T00:00:00");
+  const jour = JOUR_JS_VERS_CLE[date.getDay()];
+  const semaine = calculerSemaineAuto(edt, date) || "A";
+  return (edt.creneaux || []).find((c) => c.classeId === classeId && c.jour === jour && (!c.semaine || c.semaine === semaine)) || null;
+}
+
 function estDansVacances(edt, date) {
   const iso = date.toISOString().slice(0, 10);
   return (edt.vacances || []).find((v) => iso >= v.dateDebut && iso <= v.dateFin) || null;
@@ -6816,7 +6900,7 @@ export default function EpsPro() {
   } else {
     switch (tab) {
       case "accueil": title = "Accueil"; body = <Accueil classes={classes} edt={edt} setEdt={setEdt} etablissement={etablissement} onOpenEdt={() => push("edt", {})} onOpenAppel={ouvrirAppelDepuisEdt} />; break;
-      case "gestion": title = "Gestion de classe"; body = <GestionClasseScreen sousOnglet={sousOngletGestion} setSousOnglet={setSousOngletGestion} classes={classes} setClasses={setClasses} updateClasse={updateClasse} updateEleve={updateEleveIn} onOpenClass={(id) => push("classeDetail", { id })} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} appelPreselection={appelPreselection} onAppelPreselectionConsumed={() => setAppelPreselection(null)} />; break;
+      case "gestion": title = "Gestion de classe"; body = <GestionClasseScreen sousOnglet={sousOngletGestion} setSousOnglet={setSousOngletGestion} classes={classes} setClasses={setClasses} updateClasse={updateClasse} updateEleve={updateEleveIn} onOpenClass={(id) => push("classeDetail", { id })} onOpenEleve={(cid, eid) => push("fiche", { classeId: cid, eleveId: eid })} onAnnotate={(cid, eid, activite) => setAnnotCible({ classeId: cid, eleveId: eid, activite })} onVoirFicheCycle={(cid) => push("ficheCycle", { classeId: cid })} biblio={biblio} setBiblio={setBiblio} appelPreselection={appelPreselection} onAppelPreselectionConsumed={() => setAppelPreselection(null)} edt={edt} />; break;
       case "documents": title = "Documents"; body = <DocumentsScreen biblio={biblio} setBiblio={setBiblio} onSupprimerPhotoDeDispense={supprimerPhotoDeDispense} onOpenRecapDispenses={() => push("recapDispenses", {})} onOpenEvaluations={() => push("evaluations", {})} onOpenEvaluation={(id) => push("evaluationEditor", { id })} />; break;
       case "outils": title = "Outils"; body = <OutilsScreen onOpenOutil={(id) => push("outil", { id })} onOpenEvaluations={() => push("evaluations", {})} onOpenEdt={() => push("edt", {})} onOpenAssistantRentree={() => push("assistantRentree", {})} onOpenChangerPin={() => push("changerPin", {})} />; break;
       case "liens": title = "Liens"; body = (
