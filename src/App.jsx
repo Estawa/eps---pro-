@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.20.0";
+const APP_VERSION = "1.21.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -100,7 +100,17 @@ async function cloudEcrire(codeProf, cle, valeur, maj) {
   }
 }
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+// Formate un objet Date en "AAAA-MM-JJ" à partir de ses composantes LOCALES (jour, mois, année
+// tels qu'affichés sur l'appareil), plutôt que via toISOString() qui convertit en UTC et peut
+// décaler la date d'un jour pour les fuseaux horaires en avance sur UTC (ex. la France).
+function dateISOLocale(d) {
+  const annee = d.getFullYear();
+  const mois = String(d.getMonth() + 1).padStart(2, "0");
+  const jour = String(d.getDate()).padStart(2, "0");
+  return `${annee}-${mois}-${jour}`;
+}
+
+const todayISO = () => dateISOLocale(new Date());
 const nowISO = () => new Date().toISOString();
 const fmtDateHeure = (iso) => {
   const d = new Date(iso);
@@ -468,7 +478,7 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt, onOpenAppel }
     d.setDate(d.getDate() + i);
     return d;
   });
-  const isoSemaine = datesSemaine.map((d) => d.toISOString().slice(0, 10));
+  const isoSemaine = datesSemaine.map((d) => dateISOLocale(d));
 
   const sauterADate = (dateStr) => {
     if (!dateStr) return;
@@ -2230,74 +2240,74 @@ function AppelScreen({ classes, updateClasse, onOpenEleve, onAnnotate, onVoirFic
     const infoStatut = statutActuel ? STATUTS[statutActuel] : null;
     const estRetard = statutActuel === "retard";
     return (
-      <div key={e.id} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 6px", borderBottom: `1px solid ${LINE}`, background: dispBg, borderRadius: dispense ? 8 : 0, opacity: inactif ? 0.5 : 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div onClick={() => demanderOuvertureFiche(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
-            <Avatar eleve={e} size={52} numero={numeroEleve(classe, e.id)} />
-            {!dispense && compteST > 0 && (
-              <div title={`${compteST} oubli(s) de tenue${perteFinale ? " · -1 pt" : ""}`} style={{
-                position: "absolute", bottom: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8, padding: "0 3px",
-                background: perteFinale ? "var(--st-absent-c)" : "var(--st-tenue-c)", color: "#fff", fontSize: 9.5, fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${CARD}`,
-              }}>
-                {compteST}
-              </div>
-            )}
-          </div>
+      <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 6px", borderBottom: `1px solid ${LINE}`, background: dispBg, borderRadius: dispense ? 8 : 0, opacity: inactif ? 0.5 : 1 }}>
+        <div onClick={() => demanderOuvertureFiche(classeId, e.id)} style={{ cursor: "pointer", position: "relative", flexShrink: 0, alignSelf: "center" }}>
+          <Avatar eleve={e} size={96} numero={numeroEleve(classe, e.id)} />
+          {!dispense && compteST > 0 && (
+            <div title={`${compteST} oubli(s) de tenue${perteFinale ? " · -1 pt" : ""}`} style={{
+              position: "absolute", bottom: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, padding: "0 4px",
+              background: perteFinale ? "var(--st-absent-c)" : "var(--st-tenue-c)", color: "#fff", fontSize: 11, fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${CARD}`,
+            }}>
+              {compteST}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
           <div
             onClick={() => demanderOuvertureFiche(classeId, e.id)}
             title={inactif ? "Élève retiré de la classe" : dispense && !dispenseAvecPhoto ? "Dispensé — justificatif photo manquant" : undefined}
-            style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "normal", overflowWrap: "break-word", lineHeight: 1.25, textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
+            style={{ fontSize: 14, fontWeight: 600, color: dispColor, cursor: "pointer", whiteSpace: "normal", overflowWrap: "break-word", lineHeight: 1.25, textDecoration: (classe.delegues || []).includes(e.id) ? "underline" : "none" }}
           >
             {e.prenom} {e.nom}{e.sexe && <span style={{ fontSize: 10.5, fontWeight: 400, color: "var(--muted-soft)" }}> · {normaliserSexe(e.sexe)}</span>}
             {inactif && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--st-absent-c)" }}> · Retiré(e)</span>}
           </div>
-        </div>
-        {inactif ? (
-          <div style={{ fontSize: 11, color: "var(--muted-soft)", fontStyle: "italic", padding: "0 6px" }}>Retiré(e) de la classe</div>
-        ) : (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-          {estRetard && (
-            <select
-              value={retards[e.id] || 5}
-              onChange={(ev) => setRetard(e.id, Number(ev.target.value))}
-              title="Minutes de retard"
-              style={{ height: 46, borderRadius: 11, border: `1.5px solid var(--st-retard-bd)`, background: "var(--st-retard-bg)", color: "var(--st-retard-c)", fontWeight: 700, fontSize: 13, padding: "0 8px", flexShrink: 0 }}
-            >
-              {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
-                <option key={m} value={m}>{m} min</option>
-              ))}
-            </select>
-          )}
-          <div style={{ position: "relative", width: 46, height: 46, flexShrink: 0 }}>
-            <div style={{
-              width: 46, height: 46, borderRadius: 11, border: `1.5px solid ${infoStatut ? infoStatut.color : LINE}`,
-              background: infoStatut ? infoStatut.bg : CARD, color: infoStatut ? infoStatut.color : "var(--muted-soft)",
-              display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none",
-            }}>
-              {infoStatut ? <infoStatut.Icon size={22} /> : <span style={{ fontSize: 10.5, fontWeight: 700 }}>—</span>}
+          {inactif ? (
+            <div style={{ fontSize: 11, color: "var(--muted-soft)", fontStyle: "italic" }}>Retiré(e) de la classe</div>
+          ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+            {estRetard && (
+              <select
+                value={retards[e.id] || 5}
+                onChange={(ev) => setRetard(e.id, Number(ev.target.value))}
+                title="Minutes de retard"
+                style={{ height: 46, borderRadius: 11, border: `1.5px solid var(--st-retard-bd)`, background: "var(--st-retard-bg)", color: "var(--st-retard-c)", fontWeight: 700, fontSize: 13, padding: "0 8px", flexShrink: 0 }}
+              >
+                {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
+                  <option key={m} value={m}>{m} min</option>
+                ))}
+              </select>
+            )}
+            <div style={{ position: "relative", width: 46, height: 46, flexShrink: 0 }}>
+              <div style={{
+                width: 46, height: 46, borderRadius: 11, border: `1.5px solid ${infoStatut ? infoStatut.color : LINE}`,
+                background: infoStatut ? infoStatut.bg : CARD, color: infoStatut ? infoStatut.color : "var(--muted-soft)",
+                display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none",
+              }}>
+                {infoStatut ? <infoStatut.Icon size={22} /> : <span style={{ fontSize: 10.5, fontWeight: 700 }}>—</span>}
+              </div>
+              <select
+                value={statutActuel || ""}
+                onChange={(ev) => onClicStatut(e, ev.target.value || null)}
+                title="Statut de présence"
+                style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%", fontSize: 16 }}
+              >
+                <option value="">— Aucun statut —</option>
+                {Object.entries(STATUTS).map(([key, s]) => (
+                  <option key={key} value={key}>{s.label}</option>
+                ))}
+              </select>
             </div>
-            <select
-              value={statutActuel || ""}
-              onChange={(ev) => onClicStatut(e, ev.target.value || null)}
-              title="Statut de présence"
-              style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%", fontSize: 16 }}
+            <button
+              onClick={() => onAnnotate(classeId, e.id, cycle?.activite)}
+              title="Annotation rapide"
+              style={{ width: 46, height: 46, borderRadius: 11, border: `1.5px solid ${LINE}`, background: CARD, color: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
             >
-              <option value="">— Aucun statut —</option>
-              {Object.entries(STATUTS).map(([key, s]) => (
-                <option key={key} value={key}>{s.label}</option>
-              ))}
-            </select>
+              <StickyNote size={20} />
+            </button>
           </div>
-          <button
-            onClick={() => onAnnotate(classeId, e.id, cycle?.activite)}
-            title="Annotation rapide"
-            style={{ width: 46, height: 46, borderRadius: 11, border: `1.5px solid ${LINE}`, background: CARD, color: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
-          >
-            <StickyNote size={20} />
-          </button>
+          )}
         </div>
-        )}
       </div>
     );
   };
@@ -5108,19 +5118,19 @@ function creneauPourClasseEtDate(edt, classeId, dateISO) {
 }
 
 function estDansVacances(edt, date) {
-  const iso = date.toISOString().slice(0, 10);
+  const iso = dateISOLocale(date);
   return (edt.vacances || []).find((v) => iso >= v.dateDebut && iso <= v.dateFin) || null;
 }
 
 function estJourFerie(edt, date) {
-  const iso = date.toISOString().slice(0, 10);
+  const iso = dateISOLocale(date);
   return (edt.feries || []).find((f) => f.date === iso) || null;
 }
 
 function ajouterJoursISO(iso, n) {
   const d = new Date(iso + "T00:00:00");
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  return dateISOLocale(d);
 }
 
 function lundiDeLaSemaine(date) {
