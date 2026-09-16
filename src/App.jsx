@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.21.0";
+const APP_VERSION = "1.22.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -495,6 +495,30 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt, onOpenAppel }
   const vacancesEnCours = weekOffset === 0 ? estDansVacances(edt, aujourdhui) : null;
   const ferieAujourdhui = weekOffset === 0 ? estJourFerie(edt, aujourdhui) : null;
 
+  // Compteurs de jours restants avant les prochaines vacances et avant les vacances d'été,
+  // affichés en haut de la page d'accueil, au-dessus de l'emploi du temps.
+  const aujourdhuiISO = dateISOLocale(aujourdhui);
+  const vacancesActuelles = estDansVacances(edt, aujourdhui);
+  const prochainesVacances = trouverProchainesVacances(edt, aujourdhui);
+  const vacancesEte = trouverVacancesEte(edt);
+  const enVacancesEte = vacancesEte ? estDansVacances({ vacances: [vacancesEte] }, aujourdhui) : null;
+
+  const compteurProchaines = (!vacancesActuelles && prochainesVacances)
+    ? {
+        nom: prochainesVacances.nom,
+        travail: joursTravailAvant(edt, prochainesVacances.dateDebut, aujourdhuiISO),
+        total: joursCalendairesAvant(prochainesVacances.dateDebut, aujourdhuiISO),
+      }
+    : null;
+
+  const compteurEte = (vacancesEte && !enVacancesEte && vacancesEte.dateDebut > aujourdhuiISO)
+    ? {
+        nom: vacancesEte.nom,
+        travail: joursTravailAvant(edt, vacancesEte.dateDebut, aujourdhuiISO),
+        total: joursCalendairesAvant(vacancesEte.dateDebut, aujourdhuiISO),
+      }
+    : null;
+
   return (
     <div style={{ padding: 18 }}>
       <div style={{ marginBottom: 22 }}>
@@ -511,6 +535,45 @@ function Accueil({ classes, edt, setEdt, etablissement, onOpenEdt, onOpenAppel }
           <GraduationCap size={14} color={PRIMARY} />
           {etablissement?.nom && <span style={{ fontWeight: 600, color: INK }}>{etablissement.nom}</span>}
           {etablissement?.anneeScolaire && <span>· Année {etablissement.anneeScolaire}</span>}
+        </div>
+      )}
+
+      {(vacancesActuelles || compteurProchaines || vacancesEte) && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+          <div style={{ border: `1px solid ${LINE}`, borderRadius: 12, padding: 12, background: CARD }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 7 }}>
+              <Calendar size={12} color={PRIMARY} /> Prochaines vacances
+            </div>
+            {vacancesActuelles ? (
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: ACCENT }}>En vacances</div>
+            ) : compteurProchaines ? (
+              <>
+                <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 4, fontWeight: 600 }}>{compteurProchaines.nom}</div>
+                <div style={{ fontSize: 21, fontWeight: 800, color: PRIMARY, lineHeight: 1.1 }}>{compteurProchaines.travail}</div>
+                <div style={{ fontSize: 10.5, color: "var(--muted-soft)", marginBottom: 6 }}>jour(s) de travail</div>
+                <div style={{ fontSize: 12, color: INK, fontWeight: 600 }}>{compteurProchaines.total} jour(s) au total</div>
+              </>
+            ) : (
+              <div style={{ fontSize: 12, color: "var(--muted-soft)" }}>Aucune période renseignée</div>
+            )}
+          </div>
+          <div style={{ border: `1px solid ${LINE}`, borderRadius: 12, padding: 12, background: CARD }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, fontWeight: 700, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 7 }}>
+              <Sun size={12} color={PRIMARY} /> Vacances d'été
+            </div>
+            {enVacancesEte ? (
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: ACCENT }}>En vacances</div>
+            ) : compteurEte ? (
+              <>
+                <div style={{ fontSize: 11.5, color: "var(--muted-soft)", marginBottom: 4, fontWeight: 600 }}>{compteurEte.nom}</div>
+                <div style={{ fontSize: 21, fontWeight: 800, color: PRIMARY, lineHeight: 1.1 }}>{compteurEte.travail}</div>
+                <div style={{ fontSize: 10.5, color: "var(--muted-soft)", marginBottom: 6 }}>jour(s) de travail</div>
+                <div style={{ fontSize: 12, color: INK, fontWeight: 600 }}>{compteurEte.total} jour(s) au total</div>
+              </>
+            ) : (
+              <div style={{ fontSize: 12, color: "var(--muted-soft)" }}>Aucune période renseignée</div>
+            )}
+          </div>
         </div>
       )}
 
@@ -5125,6 +5188,53 @@ function estDansVacances(edt, date) {
 function estJourFerie(edt, date) {
   const iso = dateISOLocale(date);
   return (edt.feries || []).find((f) => f.date === iso) || null;
+}
+
+// Enlève les accents et met en minuscules, pour repérer "été" quelle que soit sa saisie.
+function normaliserTexte(s) {
+  return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+// Repère la période de vacances d'été parmi celles saisies par le prof : d'abord par son nom
+// (contient "ete"), sinon on prend celle dont la date de début est la plus tardive dans l'année.
+function trouverVacancesEte(edt) {
+  const liste = edt?.vacances || [];
+  if (liste.length === 0) return null;
+  const parNom = liste.find((v) => normaliserTexte(v.nom).includes("ete"));
+  if (parNom) return parNom;
+  return [...liste].sort((a, b) => (a.dateDebut < b.dateDebut ? 1 : -1))[0];
+}
+
+// Prochaine période de vacances à venir (date de début strictement après la date de référence).
+function trouverProchainesVacances(edt, dateRef) {
+  const iso = dateISOLocale(dateRef);
+  const liste = (edt?.vacances || []).filter((v) => v.dateDebut > iso).sort((a, b) => (a.dateDebut > b.dateDebut ? 1 : -1));
+  return liste[0] || null;
+}
+
+// Nombre de jours calendaires restants avant le début d'une période (jour de référence exclu).
+function joursCalendairesAvant(dateDebutISO, dateRefISO) {
+  const debut = new Date(dateDebutISO + "T00:00:00");
+  const ref = new Date(dateRefISO + "T00:00:00");
+  const diff = Math.round((debut - ref) / 86400000);
+  return Math.max(diff - 1, 0);
+}
+
+// Nombre de jours de travail restants avant le début d'une période : jours de lundi à vendredi,
+// à partir du lendemain de la date de référence, en excluant jours fériés et autres vacances.
+function joursTravailAvant(edt, dateDebutISO, dateRefISO) {
+  let compte = 0;
+  const cur = new Date(dateRefISO + "T00:00:00");
+  cur.setDate(cur.getDate() + 1);
+  const limite = new Date(dateDebutISO + "T00:00:00");
+  while (cur < limite) {
+    const jourSemaine = cur.getDay(); // 0 = dimanche, 6 = samedi
+    if (jourSemaine !== 0 && jourSemaine !== 6 && !estJourFerie(edt, cur) && !estDansVacances(edt, cur)) {
+      compte++;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  return compte;
 }
 
 function ajouterJoursISO(iso, n) {
