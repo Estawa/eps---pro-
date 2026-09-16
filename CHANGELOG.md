@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.18.0**
+Version actuelle : **1.20.0**
 
 ---
 
@@ -66,6 +66,25 @@ Version actuelle : **1.18.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.20.0 — 16/09/2026
+- **Protection étendue aux onglets du bas** : la question « Enregistrer et continuer / Continuer
+  sans enregistrer / Annuler » se déclenche désormais aussi quand l'appel n'est pas enregistré
+  et qu'on change d'onglet en bas de l'écran (Accueil, Documents, Outils…) ou de sous-onglet dans
+  Gestion de classe (Classe/Groupe, Trombi, Recherche) — et plus seulement au clic sur la photo
+  d'un élève
+
+### v1.19.0 — 16/09/2026
+- **Appel — retour sans perte de données** : quitter accidentellement l'appel (ex. clic sur la
+  photo d'un élève, qui ouvre sa fiche) ne fait plus perdre la saisie en cours. Si des
+  changements ne sont pas encore enregistrés, une fenêtre propose désormais « Enregistrer et
+  continuer », « Continuer sans enregistrer » ou « Annuler — rester sur l'appel »
+- **Retour rapide sur l'appel** : la classe et la date de l'appel en cours sont mémorisées ; en
+  revenant en arrière depuis la fiche élève, l'appel se rouvre exactement là où il en était
+  (même classe, même date), sans avoir à tout reconfigurer
+- **Fiche d'appel** : la photo de l'élève est agrandie, et les deux icônes (statut de présence et
+  annotation rapide) sont désormais regroupées et décalées vers la droite de la ligne, à l'écart
+  de la photo, pour limiter les mauvaises manipulations qui faisaient sortir de l'appel
 
 ### v1.18.0 — 16/09/2026
 - **Appel bloqué si la classe n'a pas cours ce jour-là** : l'écran d'appel vérifie désormais
