@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.21.0**
+Version actuelle : **1.22.0**
 
 ---
 
@@ -17,6 +17,8 @@ Version actuelle : **1.21.0**
 - Sélecteur d'alternance Semaine A / B / Auto
 - Bannière vacances / jour férié (jour même)
 - Nom de l'établissement et année scolaire en cours affichés au-dessus de l'EDT
+- Compteurs « Prochaines vacances » et « Vacances d'été » (jours de travail restants et jours
+  calendaires restants), affichés au-dessus de l'EDT
 
 ### Gestion de classe (Classe/Groupe classe, Appel, Trombinoscope)
 - Classes simples et groupes classe (jusqu'à 5 classes d'origine réunies)
@@ -66,6 +68,16 @@ Version actuelle : **1.21.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.22.0 — 16/09/2026
+- **Nouveau sur l'Accueil** : deux compteurs affichés au-dessus de l'emploi du temps —
+  « Prochaines vacances » et « Vacances d'été » — indiquant chacun le nombre de jours de travail
+  restants (lundi-vendredi, hors jours fériés et autres périodes de vacances) ainsi que le nombre
+  de jours calendaires restants jusqu'au début de la période. Le décompte démarre le lendemain
+  (le jour même n'est pas compté). Si la période correspondante est déjà en cours, le compteur
+  affiche simplement « En vacances ». Les vacances d'été sont repérées automatiquement parmi les
+  périodes saisies dans l'emploi du temps (par leur nom, ou à défaut la période la plus tardive
+  de l'année)
 
 ### v1.21.0 — 16/09/2026
 - **Correction d'un bug de date important** : sur ce type d'appareil (fuseau horaire en avance
