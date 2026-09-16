@@ -6,7 +6,7 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.20.0**
+Version actuelle : **1.21.0**
 
 ---
 
@@ -66,6 +66,17 @@ Version actuelle : **1.20.0**
 ---
 
 ## 2. Journal des versions
+
+### v1.21.0 — 16/09/2026
+- **Correction d'un bug de date important** : sur ce type d'appareil (fuseau horaire en avance
+  sur UTC, comme la France), toutes les dates calculées par l'application étaient parfois
+  décalées d'un jour en moins (ex. clic sur le créneau du mercredi dans l'emploi du temps →
+  l'appel s'ouvrait au mardi). Toutes les dates de l'application (emploi du temps, appel,
+  vacances, jours fériés, date du jour…) sont désormais calculées à partir de l'heure locale de
+  l'appareil et non plus convertie en UTC — un clic sur un créneau du jour ouvre maintenant
+  directement l'appel à la bonne date
+- **Fiche d'appel** : la photo de l'élève est nettement agrandie (presque deux fois plus grande)
+  et centrée sur la hauteur de la ligne, à côté du nom et des icônes de statut/annotation
 
 ### v1.20.0 — 16/09/2026
 - **Protection étendue aux onglets du bas** : la question « Enregistrer et continuer / Continuer
