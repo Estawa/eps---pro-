@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Numéro de version de l'application — à incrémenter à chaque mise à jour livrée.
 // Historique détaillé des changements : voir CHANGELOG.md à la racine du projet.
-const APP_VERSION = "1.22.0";
+const APP_VERSION = "1.23.0";
 
 // ---------- Stockage local persistant (IndexedDB) ----------
 const DB_NOM = "eps-pro-db";
@@ -5963,8 +5963,197 @@ function DupliquerCyclesModal({ classes, onClose, onValider }) {
   );
 }
 
+// ---------- Fenêtre : import d'un fichier de notes exporté par une appli sportive (VMA Pro,
+// Course de Durée Pro...) au format commun convenu (classeur Excel à 2 feuilles "Séances" /
+// "Synthèse cycle"). Les élèves sont retrouvés par nom+prénom dans la classe choisie ; les
+// lignes importées créent un nouveau tableau d'évaluation, librement modifiable ensuite comme
+// n'importe quel tableau créé à la main. ----------
+function ImporterNotesModal({ classes, onClose, onCreerEvaluation, onOpenEvaluation }) {
+  const [etape, setEtape] = useState("choix"); // choix | apercu
+  const [classeId, setClasseId] = useState(classes[0]?.id || "");
+  const [feuilleChoisie, setFeuilleChoisie] = useState("seances"); // seances | cycle
+  const [lignesSeances, setLignesSeances] = useState([]);
+  const [lignesCycle, setLignesCycle] = useState([]);
+  const [nomFichier, setNomFichier] = useState("");
+  const [erreur, setErreur] = useState("");
+
+  const classe = classes.find((c) => c.id === classeId);
+
+  const handleFichier = (file) => {
+    setErreur("");
+    setNomFichier(file.name);
+    const reader = new FileReader();
+    reader.onerror = () => setErreur("La lecture du fichier a échoué. Réessayez.");
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "array" });
+        const feuilleS = wb.Sheets["Séances"];
+        const feuilleC = wb.Sheets["Synthèse cycle"];
+        if (!feuilleS && !feuilleC) {
+          setErreur('Ce fichier ne contient pas les feuilles attendues ("Séances" / "Synthèse cycle") — vérifie qu\'il vient bien d\'une de tes applis sportives.');
+          return;
+        }
+        setLignesSeances(feuilleS ? XLSX.utils.sheet_to_json(feuilleS, { defval: "" }) : []);
+        setLignesCycle(feuilleC ? XLSX.utils.sheet_to_json(feuilleC, { defval: "" }) : []);
+        setFeuilleChoisie(feuilleS ? "seances" : "cycle");
+        setEtape("apercu");
+      } catch (e) {
+        setErreur("Impossible de lire ce fichier (format non reconnu).");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const lignesActives = feuilleChoisie === "seances" ? lignesSeances : lignesCycle;
+
+  const matches = useMemo(() => lignesActives.map((ligne) => {
+    const nom = String(ligne["Nom"] || "").trim();
+    const prenom = String(ligne["Prénom"] || "").trim();
+    const eleve = classe ? classe.eleves.find((e) => normaliser(e.nom) === normaliser(nom) && normaliser(e.prenom) === normaliser(prenom)) : null;
+    return { ligne, nom, prenom, eleve };
+  }), [lignesActives, classe]);
+  const nbMatches = matches.filter((m) => m.eleve).length;
+  const nomsNonTrouves = [...new Set(matches.filter((m) => !m.eleve).map((m) => `${m.prenom} ${m.nom}`.trim()))];
+
+  function importer() {
+    if (!classe) return;
+    const matchesValides = matches.filter((m) => m.eleve);
+    if (matchesValides.length === 0) {
+      setErreur("Aucun élève de cette classe n'a été reconnu dans le fichier (vérifie la classe choisie).");
+      return;
+    }
+
+    const colonnes = feuilleChoisie === "seances"
+      ? [
+          { id: uid(), titre: "Date", type: "saisie" },
+          { id: uid(), titre: "Titre", type: "saisie" },
+          { id: uid(), titre: "Note", type: "saisie" },
+          { id: uid(), titre: "Note sur", type: "saisie" },
+          { id: uid(), titre: "Détail critères", type: "saisie" },
+        ]
+      : [
+          { id: uid(), titre: "Séances comptées", type: "saisie" },
+          { id: uid(), titre: "Séances exclues", type: "saisie" },
+          { id: uid(), titre: "Moyenne de cycle /20", type: "saisie" },
+          { id: uid(), titre: "Blocs réussis", type: "saisie" },
+          { id: uid(), titre: "Progression", type: "saisie" },
+        ];
+    const clesSource = feuilleChoisie === "seances"
+      ? ["Date", "Titre", "Note", "Note sur", "Détail critères"]
+      : ["Séances comptées", "Séances exclues", "Moyenne de cycle /20", "Blocs réussis", "Progression"];
+
+    const parEleve = {};
+    matchesValides.forEach(({ ligne, eleve }) => {
+      if (!parEleve[eleve.id]) parEleve[eleve.id] = [];
+      parEleve[eleve.id].push(ligne);
+    });
+    const lignesParEleve = Math.max(1, ...Object.values(parEleve).map((ls) => ls.length));
+
+    const valeurs = {};
+    Object.entries(parEleve).forEach(([eleveId, lignesEleve]) => {
+      valeurs[eleveId] = {};
+      lignesEleve.forEach((ligne, i) => {
+        const cellules = {};
+        colonnes.forEach((col, j) => { cellules[col.id] = ligne[clesSource[j]] ?? ""; });
+        valeurs[eleveId][i] = cellules;
+      });
+    });
+
+    const application = lignesActives[0]?.["Application"] || "Appli sportive";
+    const activite = lignesActives[0]?.["Activité"] || "";
+    const titre = `${application}${activite ? " — " + activite : ""} — ${feuilleChoisie === "seances" ? "séances importées" : "synthèse de cycle importée"}`;
+
+    const ev = {
+      id: uid(),
+      titre,
+      classeId: classe.id,
+      classeNom: classe.nom,
+      dateCreation: nowISO(),
+      dateModif: nowISO(),
+      lignesParEleve,
+      colonnes,
+      valeurs,
+      lignesLibres: [],
+    };
+    onCreerEvaluation(ev);
+    onClose();
+    onOpenEvaluation(ev.id);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto", background: CARD, borderRadius: "18px 18px 0 0", padding: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>Importer des notes (autre appli)</div>
+          <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted-soft)" }}><X size={20} /></button>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 6 }}>Classe / Groupe classe cible</div>
+          <select value={classeId} onChange={(e) => setClasseId(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 10, border: `1px solid ${LINE}`, fontSize: 13, background: "var(--bg)", color: INK }}>
+            {classes.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+          </select>
+        </div>
+
+        {erreur && <div style={{ fontSize: 12.5, color: "var(--st-absent-c)", background: "var(--danger-soft, rgba(220,38,38,0.08))", borderRadius: 10, padding: "8px 10px", marginBottom: 12 }}>{erreur}</div>}
+
+        {etape === "choix" && (
+          <>
+            <div style={{ fontSize: 12.5, color: "var(--muted-soft)", marginBottom: 10 }}>
+              Fichier .xlsx exporté depuis une appli sportive ("Exporter pour EPS Pro").
+            </div>
+            <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "28px 0", borderRadius: 12, border: `1.5px dashed ${PRIMARY}`, color: PRIMARY, fontSize: 13, cursor: "pointer" }}>
+              <input type="file" accept=".xlsx" onChange={(e) => e.target.files[0] && handleFichier(e.target.files[0])} style={{ display: "none" }} />
+              <Upload size={20} />
+              Toucher pour choisir un fichier
+            </label>
+          </>
+        )}
+
+        {etape === "apercu" && (
+          <>
+            <div style={{ fontSize: 12, color: "var(--muted-soft)", marginBottom: 10 }}>{nomFichier}</div>
+
+            {lignesSeances.length > 0 && lignesCycle.length > 0 && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                <button onClick={() => setFeuilleChoisie("seances")} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: `1px solid ${feuilleChoisie === "seances" ? PRIMARY : LINE}`, background: feuilleChoisie === "seances" ? PRIMARY_SOFT : "none", color: feuilleChoisie === "seances" ? PRIMARY : INK, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
+                  Détail par séance ({lignesSeances.length})
+                </button>
+                <button onClick={() => setFeuilleChoisie("cycle")} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: `1px solid ${feuilleChoisie === "cycle" ? PRIMARY : LINE}`, background: feuilleChoisie === "cycle" ? PRIMARY_SOFT : "none", color: feuilleChoisie === "cycle" ? PRIMARY : INK, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
+                  Synthèse de cycle ({lignesCycle.length})
+                </button>
+              </div>
+            )}
+
+            <div style={{ fontSize: 13, color: INK, marginBottom: 6 }}>
+              {nbMatches} ligne{nbMatches > 1 ? "s" : ""} reconnue{nbMatches > 1 ? "s" : ""} dans « {classe?.nom} » sur {lignesActives.length}
+            </div>
+            {nomsNonTrouves.length > 0 && (
+              <div style={{ fontSize: 12, color: "var(--muted-soft)", marginBottom: 12 }}>
+                Non reconnu{nomsNonTrouves.length > 1 ? "s" : ""} dans cette classe : {nomsNonTrouves.join(", ")}
+              </div>
+            )}
+
+            <div style={{ fontSize: 12, color: "var(--muted-soft)", marginBottom: 14 }}>
+              Ça créera un nouveau tableau « {lignesActives[0]?.["Application"] || "Appli sportive"} — {feuilleChoisie === "seances" ? "séances importées" : "synthèse de cycle importée"} », que tu pourras ensuite modifier, déplacer ou fusionner comme n'importe quel tableau.
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <button onClick={() => setEtape("choix")} style={{ border: "none", background: "none", color: "var(--muted-soft)", fontSize: 13, cursor: "pointer" }}>← Changer de fichier</button>
+              <button onClick={importer} style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                Importer {nbMatches} ligne{nbMatches > 1 ? "s" : ""} →
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function EvaluationListScreen({ classes, evaluations, onOpenEvaluation, onCreerEvaluation, onSupprimerEvaluation }) {
   const [formOuvert, setFormOuvert] = useState(false);
+  const [importOuvert, setImportOuvert] = useState(false);
 
   const creer = ({ titre, classeId }) => {
     const classe = classes.find((c) => c.id === classeId);
@@ -5977,8 +6166,11 @@ function EvaluationListScreen({ classes, evaluations, onOpenEvaluation, onCreerE
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={() => setFormOuvert(true)} style={{ width: "100%", marginBottom: 16, padding: "11px 0", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+      <button onClick={() => setFormOuvert(true)} style={{ width: "100%", marginBottom: 10, padding: "11px 0", borderRadius: 10, border: "none", background: PRIMARY, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
         <Plus size={16} /> Nouveau tableau
+      </button>
+      <button onClick={() => setImportOuvert(true)} disabled={classes.length === 0} style={{ width: "100%", marginBottom: 16, padding: "10px 0", borderRadius: 10, border: `1px solid ${PRIMARY}`, background: "none", color: PRIMARY, fontWeight: 700, fontSize: 13, cursor: classes.length === 0 ? "not-allowed" : "pointer", opacity: classes.length === 0 ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <Upload size={16} /> Importer des notes (autre appli)
       </button>
 
       {evaluations.length === 0 && (
@@ -6013,6 +6205,14 @@ function EvaluationListScreen({ classes, evaluations, onOpenEvaluation, onCreerE
           onClose={() => setFormOuvert(false)}
           onSubmit={creer}
           submitLabel="Créer le tableau"
+        />
+      )}
+      {importOuvert && (
+        <ImporterNotesModal
+          classes={classes}
+          onClose={() => setImportOuvert(false)}
+          onCreerEvaluation={onCreerEvaluation}
+          onOpenEvaluation={onOpenEvaluation}
         />
       )}
     </div>
