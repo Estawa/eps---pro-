@@ -6,7 +6,17 @@
 > visible en petit à côté de « by C. Guilhem » en haut de l'écran) doit être incrémentée
 > à chaque mise à jour livrée.
 
-Version actuelle : **1.22.0**
+Version actuelle : **1.23.0**
+
+---
+
+### v1.23.0 — Import de notes depuis les applis sportives (format commun)
+- Nouveau bouton « Importer des notes (autre appli) » dans l'écran des tableaux d'évaluation (dossier Évaluation)
+- Lit un fichier .xlsx au format commun convenu avec les applis sportives (Course de Durée Pro en premier, VMA Pro/Muscu Pro/etc. à venir) : classeur à 2 feuilles, « Séances » (une ligne par séance réalisée) et « Synthèse cycle » (une ligne par élève)
+- Choix de la classe/groupe classe cible, puis de la feuille à importer (détail par séance ou synthèse de cycle) si le fichier contient les deux
+- Les élèves sont retrouvés par nom + prénom dans la classe choisie ; les lignes non reconnues sont listées sans bloquer l'import du reste
+- L'import crée un nouveau tableau d'évaluation classique (même moteur que « Nouveau tableau »), ensuite librement modifiable, déplaçable ou fusionnable à la main
+- Limite actuelle : pas de notion de « groupe classe / sous-classe » côté applis sportives — seule la classe/groupe classe de l'élève est reconnue à l'import, pas sa sous-classe d'origine au sein d'un groupe
 
 ---
 
